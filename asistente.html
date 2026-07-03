@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistente IA | Atenas Risk</title>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem("atenas_theme");
+      if (savedTheme !== "dark") {
+        document.documentElement.classList.add("light-theme");
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.classList.add("light-theme");
+        });
+      }
+    })();
+    
+    // Controlador de menú responsivo para móvil
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("mobile-nav-toggle");
+      const sidebar = document.getElementById("sidebar");
+      if (toggle && sidebar) {
+        toggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          sidebar.classList.toggle("open");
+        });
+        document.addEventListener("click", (e) => {
+          if (sidebar.classList.contains("open") && !sidebar.contains(e.target) && e.target !== toggle) {
+            sidebar.classList.remove("open");
+          }
+        });
+      }
+    });
+  </script>
+  
+  <!-- CSS Personalizado -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Lucide Icons para Iconos Modernos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="assistant-page">
+
+  <div class="app-container">
+    
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i data-lucide="graduation-cap"></i>
+        </div>
+        <div class="logo-text">
+          <h2>Atenas Risk</h2>
+          <span>Análisis de Deserción</span>
+        </div>
+      </div>
+      
+      <!-- Menú de Navegación -->
+      <nav class="nav-menu">
+        <li class="nav-item" id="nav-resumen">
+          <a href="index.html" class="nav-link"><i data-lucide="layout-dashboard"></i> <span data-i18n="menu_summary">Resumen Académico</span></a>
+        </li>
+        <li class="nav-item nav-dropdown" id="nav-dropdown-estudiantes">
+          <button class="nav-link dropdown-toggle">
+            <i data-lucide="users"></i>
+            <span data-i18n="menu_students">Ficha Estudiantes</span>
+            <i data-lucide="chevron-down" class="dropdown-chevron"></i>
+          </button>
+          <ul class="nav-sub-menu">
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-completo">
+              <a href="estudiantes.html" class="nav-link"><i data-lucide="list"></i> <span data-i18n="menu_students">Listado completo</span></a>
+            </li>
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-alto">
+              <a href="riesgo_alto.html" class="nav-link"><i data-lucide="alert-triangle"></i> <span data-i18n="menu_risk_high">Riesgo Alto</span></a>
+            </li>
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-medio">
+              <a href="riesgo_medio.html" class="nav-link"><i data-lucide="alert-circle"></i> <span data-i18n="menu_risk_medium">Riesgo Medio</span></a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item" id="nav-configuracion">
+          <a href="index.html#configuracion" class="nav-link"><i data-lucide="info"></i> <span data-i18n="menu_methodology">Metodología</span></a>
+        </li>
+        <li class="nav-item active" id="nav-asistente">
+          <a href="asistente.html" class="nav-link"><i data-lucide="sparkles"></i> <span data-i18n="menu_assistant">Asistente Virtual</span></a>
+        </li>
+        <li class="nav-item" id="nav-cargar">
+          <a href="cargar.html" class="nav-link"><i data-lucide="database"></i> <span data-i18n="menu_load">Cargar Datos</span></a>
+        </li>
+      </nav>
+      
+      <!-- Script para controlar el dropdown de Estudiantes -->
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const dropdown = document.getElementById("nav-dropdown-estudiantes");
+          const toggle = dropdown ? dropdown.querySelector(".dropdown-toggle") : null;
+          if (toggle && dropdown) {
+            toggle.addEventListener("click", (e) => {
+              e.preventDefault();
+              dropdown.classList.toggle("open");
+            });
+          }
+        });
+      </script>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      
+      <!-- HEADER PRINCIPAL -->
+      <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- Gatillo menú móvil -->
+          <button id="mobile-nav-toggle" class="btn-theme-toggle mobile-nav-toggle" title="Menú">
+            <i data-lucide="menu"></i>
+          </button>
+          
+          <div class="header-title">
+            <h1 data-i18n="assistant_title">Asistente Virtual IA (Atenas Chat)</h1>
+            <p data-i18n="assistant_sub">Consulta a la IA sobre estadísticas de rendimiento, alumnos en riesgo y recomendaciones académicas.</p>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <!-- Selector de Idioma (Toggle) -->
+          <div class="lang-toggle" id="lang-toggle-container">
+            <span class="lang-slider"></span>
+            <button class="lang-btn active" id="lang-btn-es" data-lang="es">ES</button>
+            <button class="lang-btn" id="lang-btn-en" data-lang="en">EN</button>
+          </div>
+
+          <!-- Selector de Periodo Activo -->
+          <div class="period-selector-container" style="display: flex; align-items: center; gap: 8px;">
+            <label for="global-period-select" data-i18n="active_period_lbl" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Ciclo Activo:</label>
+            <select id="global-period-select" class="header-period-select">
+              <!-- Se poblará dinámicamente -->
+            </select>
+          </div>
+          
+          <!-- Estado de conexión API -->
+          <div id="api-status-badge-container"></div>
+          
+          <!-- Botón de limpiar chat (Visible si hay chat activo) -->
+          <button id="btn-clear-chat" class="btn-template" style="display: none; padding: 8px 12px; font-size: 0.8rem;">
+            <i data-lucide="trash-2"></i> <span data-i18n="btn_clear_chat">Limpiar Chat</span>
+          </button>
+ 
+          <!-- Botón de ajustes de API (Visible solo si está configurada) -->
+          <button id="btn-api-settings" class="btn-template" style="display: none; padding: 8px 12px; font-size: 0.8rem;">
+            <i data-lucide="key"></i> <span data-i18n="btn_api_settings">Configurar API Key</span>
+          </button>
+          
+          <!-- Control de Tema -->
+          <button class="btn-theme-toggle" id="theme-toggle" data-i18n-title="theme_toggle_tip" title="Cambiar tema">
+            <i data-lucide="sun" id="theme-toggle-icon"></i>
+          </button>
+        </div>
+      </header>
+ 
+      <!-- SECCION DE CONFIGURACION API (ONBOARDING) -->
+      <section id="ai-onboarding-panel" class="tab-view active" style="display: none;">
+        <div class="onboarding-layout">
+          <div class="glass-card">
+            <h2 data-i18n="onboarding_title" style="font-size: 1.3rem; margin-bottom: 8px; color: var(--text-highlight); display: flex; align-items: center; gap: 10px;">
+              <i data-lucide="bot" style="color: var(--color-primary);"></i> Configurar Conexión de Inteligencia Artificial
+            </h2>
+            <p data-i18n="onboarding_desc" style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+              Tus claves se almacenan de forma local en tu navegador y nunca salen de tu dispositivo. El asistente utilizará estas claves para analizar los datos académicos activos.
+            </p>
+            
+            <!-- Formulario de Configuración -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="form-group">
+                <label class="form-label" for="provider-select" data-i18n="onboarding_provider_lbl">Proveedor de Inteligencia Artificial</label>
+                <select id="provider-select" class="form-select">
+                  <option value="gemini" data-i18n="provider_gemini">Google Gemini (Recomendado - Gratuito)</option>
+                  <option value="openai" data-i18n="provider_openai">OpenAI ChatGPT (Modelos GPT-4o-mini)</option>
+                  <option value="claude" data-i18n="provider_claude">Anthropic Claude (Modelos Claude 3.5)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="api-key-input" data-i18n="onboarding_key_lbl">Clave API (API Key)</label>
+                <input type="password" id="api-key-input" class="form-input" data-i18n-placeholder="placeholder_api_key" placeholder="Pega tu clave secreta aquí...">
+              </div>
+              
+              <div style="margin-top: 8px;">
+                <button id="btn-save-key" class="btn-primary" style="width: 100%;">
+                  <i data-lucide="save"></i> <span data-i18n="btn_save_connect">Guardar Configuración y Conectar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Instructivo de Obtención de Claves -->
+          <div class="glass-card">
+            <h3 style="font-size: 1rem; margin-bottom: 16px; color: var(--text-highlight); display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="help-circle" style="color: var(--color-accent);"></i> ¿Cómo obtener tu Clave API?
+            </h3>
+            
+            <div class="instruction-tabs-header">
+              <button class="instruction-tab-btn active" data-tab="inst-gemini">Google Gemini</button>
+              <button class="instruction-tab-btn" data-tab="inst-openai">OpenAI ChatGPT</button>
+              <button class="instruction-tab-btn" data-tab="inst-claude">Anthropic Claude</button>
+            </div>
+            
+            <!-- Gemini Guide -->
+            <div id="inst-gemini" class="instruction-tab-content active">
+              <p>Google ofrece un plan de uso gratuito excelente para desarrolladores y docentes. Para obtener tu clave:</p>
+              <ol class="instruction-list">
+                <li>Ve al portal oficial de desarrolladores en <strong><a href="https://aistudio.google.com/" target="_blank" style="color: var(--color-secondary);">Google AI Studio</a></strong>.</li>
+                <li>Inicia sesión con tu cuenta institucional o personal de Google.</li>
+                <li>Haz clic en el botón azul <strong>"Get API Key"</strong> (Obtener clave API) en la esquina superior izquierda.</li>
+                <li>Selecciona <strong>"Create API Key"</strong> y cópiala.</li>
+                <li>Pega la clave en el campo de texto superior y haz clic en Guardar.</li>
+              </ol>
+            </div>
+            
+            <!-- OpenAI Guide -->
+            <div id="inst-openai" class="instruction-tab-content">
+              <p>Requiere una cuenta de desarrollador en OpenAI Platform con saldo prepago cargado (no las cuentas de suscripción de ChatGPT Plus). Para obtener tu clave:</p>
+              <ol class="instruction-list">
+                <li>Inicia sesión en <strong><a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--color-secondary);">OpenAI API Keys</a></strong>.</li>
+                <li>Haz clic en el botón <strong>"Create new secret key"</strong> (Crear nueva clave secreta).</li>
+                <li>Asígnale un nombre descriptivo y haz clic en crear.</li>
+                <li><strong>Copia la clave inmediatamente</strong> (empieza con <code>sk-</code>), ya que no se volverá a mostrar.</li>
+                <li>Pégala en el campo de arriba y guarda tu configuración.</li>
+              </ol>
+            </div>
+            
+            <!-- Claude Guide -->
+            <div id="inst-claude" class="instruction-tab-content">
+              <p style="color: var(--color-risk-high); font-weight: 500; margin-bottom: 8px;">
+                ⚠️ Nota de Compatibilidad: Claude no admite llamadas directas desde navegadores web debido a restricciones CORS de Anthropic. Se recomienda usar Google Gemini o OpenAI para esta versión web pura.
+              </p>
+              <p>Si deseas probar con Claude mediante un servidor proxy:</p>
+              <ol class="instruction-list">
+                <li>Inicia sesión en <strong><a href="https://console.anthropic.com/" target="_blank" style="color: var(--color-secondary);">Anthropic Console</a></strong>.</li>
+                <li>Dirígete a la sección <strong>"API Keys"</strong> en la barra de navegación del portal.</li>
+                <li>Haz clic en <strong>"Create Key"</strong> para generar tu clave.</li>
+                <li>Copia el token generado (empieza con <code>sk-ant-</code>) y colócalo en el campo de entrada superior.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCION DEL CHAT (ACTIVA SI HAY CLAVE CONFIGURADA) -->
+      <section id="ai-chat-panel" class="tab-view" style="display: none;">
+        <div class="chat-layout">
+          
+          <!-- Caja de Historial de Mensajes -->
+          <div class="chat-messages-box" id="chat-messages-container">
+            <!-- Burbuja de bienvenida por defecto -->
+            <div class="chat-bubble ai">
+              <span style="font-weight: 600; color: var(--color-primary); font-size: 0.8rem; display: block; margin-bottom: 2px;" data-i18n="chat_role_ai">ASISTENTE ACADÉMICO IA</span>
+              <p id="welcome-message-text" data-i18n="chat_welcome">¡Hola! Soy tu asistente de Inteligencia Artificial para Atenas Risk. Estoy listo para ayudarte a analizar la matriz de calificaciones y coordinar estrategias de tutorías conceptuales. Puedes preguntarme cosas sobre los estudiantes en riesgo, promedios por carrera, docentes a cargo o pedirme que redacte planes de acción.</p>
+              <span class="message-meta" data-i18n="chat_meta_system">Sistema</span>
+            </div>
+          </div>
+          
+          <!-- Chips de Sugerencias de Preguntas Rápidas -->
+          <div class="suggestion-chips-container" id="suggestion-chips-wrapper">
+            <button class="suggestion-chip" data-i18n="chip_risk" data-question-key="query_risk" data-question="¿Quién es el estudiante con el puntaje de riesgo más crítico?">¿Estudiante de mayor riesgo?</button>
+            <button class="suggestion-chip" data-i18n="chip_subjects" data-question-key="query_subjects" data-question="¿Qué materias o asignaturas tienen más alumnos reprobados?">¿Materias más críticas?</button>
+            <button class="suggestion-chip" data-i18n="chip_career" data-question-key="query_career" data-question="Hazme un resumen del rendimiento y alertas de la carrera con mayor riesgo de deserción.">Resumen de carrera crítica</button>
+            <button class="suggestion-chip" data-i18n="chip_email" data-question-key="query_email" data-question="Redacta un correo institucional formal y empático para el tutor de un alumno en riesgo alto de reprobación.">Plantilla de correo para tutor</button>
+          </div>
+          
+          <!-- Barra de entrada inferior del Chat -->
+          <div class="chat-input-group">
+            <div class="chat-input-wrapper">
+              <textarea id="chat-textarea-input" data-i18n-placeholder="chat_input_placeholder" placeholder="Hazle una consulta al asistente sobre tus datos estudiantiles..." rows="1"></textarea>
+            </div>
+            <button id="btn-send-message" class="btn-chat-send" title="Enviar mensaje">
+              <i data-lucide="send"></i>
+            </button>
+          </div>
+          
+        </div>
+      </section>
+      
+      <!-- Si la base de datos está totalmente vacía -->
+      <section id="no-data-warning-panel" class="glass-card" style="display: none; max-width: 600px; margin: 40px auto; text-align: center; padding: 40px 24px;">
+        <div class="empty-state-icon" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.15); color: var(--color-risk-high); margin-bottom: 20px; animation: none;">
+          <i data-lucide="database-backup"></i>
+        </div>
+        <h2 style="font-size: 1.25rem; margin-bottom: 12px; color: var(--text-highlight);">Sin Datos Académicos en el Sistema</h2>
+        <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">
+          El Asistente de IA requiere de los datos estudiantiles para operar. Por favor, ve a la sección de carga para importar datos o cargar la base de simulación (Demo).
+        </p>
+        <a href="cargar.html" class="btn-primary" style="text-decoration: none;">
+          <i data-lucide="database"></i> Ir a Cargar Datos
+        </a>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- JS Principal del Chat -->
+  <script src="translations.js"></script>
+  <script src="common.js"></script>
+  <script src="asistente.js"></script>
+</body>
+</html>

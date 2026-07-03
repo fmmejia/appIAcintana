@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión y Carga de Datos | Atenas Risk</title>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem("atenas_theme");
+      if (savedTheme !== "dark") {
+        document.documentElement.classList.add("light-theme");
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.classList.add("light-theme");
+        });
+      }
+    })();
+    
+    // Controlador de menú responsivo para móvil
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("mobile-nav-toggle");
+      const sidebar = document.getElementById("sidebar");
+      if (toggle && sidebar) {
+        toggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          sidebar.classList.toggle("open");
+        });
+        document.addEventListener("click", (e) => {
+          if (sidebar.classList.contains("open") && !sidebar.contains(e.target) && e.target !== toggle) {
+            sidebar.classList.remove("open");
+          }
+        });
+      }
+    });
+  </script>
+  
+  <!-- CSS Personalizado -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- CDNs de Dependencias de Terceros -->
+  <!-- PapaParse para procesar CSV -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- SheetJS (XLSX) para procesar Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons para Iconos Modernos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i data-lucide="graduation-cap"></i>
+        </div>
+        <div class="logo-text">
+          <h2>Atenas Risk</h2>
+          <span>Análisis de Deserción</span>
+        </div>
+      </div>
+      
+      <!-- Menú de Navegación -->
+      <nav class="nav-menu">
+        <li class="nav-item" id="nav-resumen">
+          <a href="index.html" class="nav-link"><i data-lucide="layout-dashboard"></i> <span data-i18n="menu_summary">Resumen Académico</span></a>
+        </li>
+        <li class="nav-item nav-dropdown" id="nav-dropdown-estudiantes">
+          <button class="nav-link dropdown-toggle">
+            <i data-lucide="users"></i>
+            <span data-i18n="menu_students">Ficha Estudiantes</span>
+            <i data-lucide="chevron-down" class="dropdown-chevron"></i>
+          </button>
+          <ul class="nav-sub-menu">
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-completo">
+              <a href="estudiantes.html" class="nav-link"><i data-lucide="list"></i> <span data-i18n="menu_students">Listado completo</span></a>
+            </li>
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-alto">
+              <a href="riesgo_alto.html" class="nav-link"><i data-lucide="alert-triangle"></i> <span data-i18n="menu_risk_high">Riesgo Alto</span></a>
+            </li>
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-medio">
+              <a href="riesgo_medio.html" class="nav-link"><i data-lucide="alert-circle"></i> <span data-i18n="menu_risk_medium">Riesgo Medio</span></a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item" id="nav-configuracion">
+          <a href="index.html#configuracion" class="nav-link"><i data-lucide="info"></i> <span data-i18n="menu_methodology">Metodología</span></a>
+        </li>
+        <li class="nav-item" id="nav-asistente">
+          <a href="asistente.html" class="nav-link"><i data-lucide="sparkles"></i> <span data-i18n="menu_assistant">Asistente Virtual</span></a>
+        </li>
+        <li class="nav-item active" id="nav-cargar">
+          <a href="cargar.html" class="nav-link"><i data-lucide="database"></i> <span data-i18n="menu_load">Cargar Datos</span></a>
+        </li>
+      </nav>
+      
+      <!-- Script para controlar el dropdown de Estudiantes -->
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const dropdown = document.getElementById("nav-dropdown-estudiantes");
+          const toggle = dropdown ? dropdown.querySelector(".dropdown-toggle") : null;
+          if (toggle && dropdown) {
+            toggle.addEventListener("click", (e) => {
+              e.preventDefault();
+              dropdown.classList.toggle("open");
+            });
+          }
+        });
+      </script>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      
+      <!-- HEADER -->
+      <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button id="mobile-nav-toggle" class="btn-theme-toggle mobile-nav-toggle" title="Menú" style="display: none;">
+            <i data-lucide="menu"></i>
+          </button>
+          <div class="header-title">
+            <h1 data-i18n="load_title">Administrador de Datos y Configuración</h1>
+            <p data-i18n="load_sub">Carga la base de datos de calificaciones de un ciclo y define el calendario de fechas evaluativas.</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <!-- Selector de Idioma (Toggle) -->
+          <div class="lang-toggle" id="lang-toggle-container">
+            <span class="lang-slider"></span>
+            <button class="lang-btn active" id="lang-btn-es" data-lang="es">ES</button>
+            <button class="lang-btn" id="lang-btn-en" data-lang="en">EN</button>
+          </div>
+
+          <!-- Selector de Periodo Activo -->
+          <div class="period-selector-container" style="display: flex; align-items: center; gap: 8px;">
+            <label for="global-period-select" data-i18n="active_period_lbl" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Ciclo Activo:</label>
+            <select id="global-period-select" class="header-period-select">
+              <!-- Se poblará dinámicamente -->
+            </select>
+          </div>
+          
+          <button id="theme-toggle" class="btn-theme-toggle" data-i18n-title="theme_toggle_tip" title="Cambiar tema">
+            <i id="theme-toggle-icon" data-lucide="sun"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- LOADER / SPINNER -->
+      <div class="loader-container" id="loader-container">
+        <div class="spinner"></div>
+        <p id="loader-text" data-i18n="loader_text">Procesando y calculando niveles de riesgo académico...</p>
+      </div>
+
+      <!-- SECCIÓN DE CARGA Y CONTROL -->
+      <section id="view-cargar" class="tab-view active">
+        
+        <div class="config-layout" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin-top: 20px;">
+          
+          <!-- Columna Izquierda: Zona de Drop & Drop para Subir Archivo -->
+          <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3 data-i18n="panel_import_title" style="margin-bottom: 8px; font-size: 1.25rem; font-family: var(--font-main);">Cargar Reporte Académico</h3>
+              <p data-i18n="panel_import_desc" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.45;">
+                Sube el reporte de calificaciones de los estudiantes en formato CSV (delimitado por punto y coma) o Excel (.xlsx, .xls) con las columnas correspondientes de docentes, asignaturas, carnet, laboratorios y parciales.
+              </p>
+            </div>
+            
+            <!-- Selector de Periodo de Destino de la Carga -->
+            <div style="margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+              <label for="import-period-select" data-i18n="import_period_lbl" style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Ciclo Académico de Destino:</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="import-period-select" class="header-period-select" style="flex: 1; height: 38px; min-width: auto; font-size: 0.85rem; background-color: var(--bg-secondary);">
+                  <!-- Se poblará dinámicamente -->
+                </select>
+                <button id="btn-create-period" type="button" style="padding: 0 16px; height: 38px; font-size: 0.8rem; white-space: nowrap; margin: 0; display: flex; align-items: center; gap: 6px; border: 1px solid var(--glass-border); background: var(--bg-secondary); color: var(--text-main); font-weight: 600; cursor: pointer; border-radius: var(--radius-md);">
+                  <i data-lucide="plus" style="width: 14px; height: 14px;"></i> <span data-i18n="btn_create_cycle">Nuevo Ciclo</span>
+                </button>
+                <button id="btn-delete-period" type="button" style="padding: 0 12px; height: 38px; font-size: 0.8rem; margin: 0; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.1); color: #fca5a5; cursor: pointer; border-radius: var(--radius-md);" title="Eliminar Ciclo Seleccionado">
+                  <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div class="dropzone-large" id="large-dropzone" style="margin-bottom: 20px; text-align: center;">
+              <i data-lucide="upload-cloud" style="font-size: 2.5rem; color: var(--color-primary); margin-bottom: 12px;"></i>
+              <h4 data-i18n="dropzone_title" style="font-size: 1rem; color: var(--text-highlight); margin-bottom: 4px;">Arrastra tu archivo aquí</h4>
+              <p data-i18n="dropzone_sub" style="font-size: 0.75rem; color: var(--text-muted);">Soporta formatos .xlsx, .xls y .csv (delimitados por `;` )</p>
+              <input type="file" id="file-input-main" accept=".csv, .xlsx, .xls" style="display: none;">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span data-i18n="template_desc" style="font-size: 0.75rem; color: var(--text-muted);">¿No tienes el archivo? Descarga la muestra:</span>
+              <button class="btn-template" id="btn-download-template" style="padding: 8px 16px; font-size: 0.8rem;">
+                <i data-lucide="download"></i> <span data-i18n="btn_download_template">Descargar Plantilla</span>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Columna Derecha: Control de Demostración, Borrado y Estado Activo -->
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            
+            <!-- Estado de la Base de Datos -->
+            <div class="glass-card" style="padding: 20px;">
+              <h3 data-i18n="storage_status_title" style="margin-bottom: 16px; font-size: 1.1rem; border-left: 3px solid var(--color-primary); padding-left: 8px;">Estado de Almacenamiento</h3>
+              
+              <div id="db-status-container" style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Rellenado dinámicamente por cargar.js -->
+              <div class="status-card-danger">
+                <i data-lucide="database" style="flex-shrink: 0; width: 20px; height: 20px;"></i>
+                <div style="font-size: 0.8rem; line-height: 1.4;">
+                  <strong>Sin datos activos</strong>
+                  No se han importado registros de estudiantes. Las vistas de reportes se encuentran deshabilitadas.
+                </div>
+              </div>
+              </div>
+            </div>
+            
+            <!-- Acciones Rápidas -->
+            <div class="glass-card" style="padding: 20px;">
+              <h3 data-i18n="system_ops_title" style="margin-bottom: 16px; font-size: 1.1rem; border-left: 3px solid var(--color-accent); padding-left: 8px;">Operaciones del Sistema</h3>
+              
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Botón Datos Demo -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: var(--radius-md);">
+                  <div style="max-width: 60%;">
+                    <strong data-i18n="demo_sim_title" style="font-size: 0.85rem; color: var(--text-highlight); display: block;">Simulación Académica</strong>
+                    <span data-i18n="demo_sim_desc" style="font-size: 0.72rem; color: var(--text-muted);">Carga una matriz aleatoria de 45 estudiantes en múltiples asignaturas.</span>
+                  </div>
+                  <button class="btn-demo" id="btn-load-demo" style="margin: 0; padding: 10px 16px; font-size: 0.8rem;">
+                    <i data-lucide="sparkles"></i> <span data-i18n="btn_load_demo">Datos Demo</span>
+                  </button>
+                </div>
+                
+                <!-- Botón Borrar Datos -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: var(--radius-md);">
+                  <div style="max-width: 60%;">
+                    <strong data-i18n="clear_db_title" style="font-size: 0.85rem; color: var(--text-highlight); display: block;">Limpiar Base de Datos</strong>
+                    <span data-i18n="clear_db_desc" style="font-size: 0.72rem; color: var(--text-muted);">Elimina de forma irreversible todos los estudiantes y configuraciones locales.</span>
+                  </div>
+                  <button id="btn-clear-database" style="margin: 0; padding: 10px 16px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #fca5a5; border-radius: var(--radius-md); font-family: inherit; font-weight: 500; cursor: pointer; transition: var(--transition-smooth); display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> <span data-i18n="btn_clear_db">Borrar Todo</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calendario de Evaluaciones por Unidad -->
+          <div class="glass-card" style="padding: 20px; grid-column: span 2; margin-top: 10px;">
+            <h3 data-i18n="panel_calendar_title" style="margin-bottom: 16px; font-size: 1.1rem; border-left: 3px solid var(--color-primary); padding-left: 8px;">Configuración de Calendario y Fechas del Ciclo</h3>
+            <p data-i18n="panel_calendar_desc" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.45;">
+              Define los rangos de fechas correspondientes a cada una de las 4 Unidades de evaluación para el Ciclo Académico seleccionado. El sistema determinará la Unidad activa en base a estas fechas (o la fecha de simulación) para calcular los promedios en base a las evaluaciones cursadas.
+            </p>
+            
+            <form id="calendar-config-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+              
+              <!-- Ciclo y Estado -->
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 15px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 12px;">
+                <h4 data-i18n="cal_sim_section" style="font-size: 0.85rem; color: var(--text-highlight); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Estado y Simulación</h4>
+                
+                <div>
+                  <label data-i18n="cal_selected_cycle" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Ciclo Seleccionado</label>
+                  <span id="calendar-period-label" style="font-weight: 700; font-size: 0.9rem; color: white;">Ciclo 1 - 2026</span>
+                </div>
+                
+                <div>
+                  <label for="cycle-status" data-i18n="cal_cycle_status" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Estado del Ciclo</label>
+                  <select id="cycle-status" class="header-period-select" style="width: 100%; min-width: auto; height: 36px; background-color: var(--bg-secondary);">
+                    <option value="active" data-i18n="option_active">Activo (En Curso)</option>
+                    <option value="completed" data-i18n="option_completed">Culminado (Cerrado)</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label for="simulation-date" data-i18n="cal_sim" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Fecha de Simulación</label>
+                  <input type="date" id="simulation-date" style="width: 100%; height: 36px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box;">
+                  <span data-i18n="cal_sim_help" style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 4px;">Simula la fecha actual para evaluar alertas del calendario. Vacío para usar la fecha del sistema.</span>
+                </div>
+              </div>
+              
+              <!-- Fechas Generales del Ciclo -->
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 15px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 12px;">
+                <h4 data-i18n="cal_duration_section" style="font-size: 0.85rem; color: var(--text-highlight); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Duración del Ciclo</h4>
+                <div>
+                  <label for="cycle-start" data-i18n="cal_start" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Fecha Inicio Ciclo</label>
+                  <input type="date" id="cycle-start" style="width: 100%; height: 36px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box;">
+                </div>
+                <div>
+                  <label for="cycle-end" data-i18n="cal_end" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Fecha Fin Ciclo</label>
+                  <input type="date" id="cycle-end" style="width: 100%; height: 36px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box;">
+                </div>
+              </div>
+              
+              <!-- Unidades 1 y 2 -->
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 15px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 12px;">
+                <h4 data-i18n="cal_u1_u2_section" style="font-size: 0.85rem; color: var(--text-highlight); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Unidad 1 y Unidad 2</h4>
+                <div>
+                  <label data-i18n="cal_u1_lbl" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Fin Unidad 1 (Lab 1 & Parcial 1)</label>
+                  <input type="date" id="unit1-end" style="width: 100%; height: 36px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box;">
+                </div>
+                <div>
+                  <label data-i18n="cal_u2_lbl" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Fin Unidad 2 (Lab 2 & Parcial 2)</label>
+                  <input type="date" id="unit2-end" style="width: 100%; height: 36px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box;">
+                </div>
+              </div>
+              
+              <!-- Unidades 3 y 4 -->
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 15px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 12px;">
+                <h4 data-i18n="cal_u3_u4_section" style="font-size: 0.85rem; color: var(--text-highlight); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">Unidad 3 y Unidad 4</h4>
+                <div>
+                  <label data-i18n="cal_u3_lbl" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Fin Unidad 3 (Lab 3 & Parcial 3)</label>
+                  <input type="date" id="unit3-end" style="width: 100%; height: 36px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box;">
+                </div>
+                <div>
+                  <label data-i18n="cal_u4_lbl" style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Fin Unidad 4 (Lab 4 & Parcial 4)</label>
+                  <input type="date" id="unit4-end" style="width: 100%; height: 36px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 10px; font-family: inherit; font-size: 0.85rem; box-sizing: border-box;">
+                </div>
+              </div>
+              
+            </form>
+            
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+              <button id="btn-save-calendar" class="btn-primary" style="background: var(--color-primary); color: white; border: none; padding: 10px 24px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; border-radius: var(--radius-md);">
+                <i data-lucide="save" style="width: 16px; height: 16px;"></i> <span data-i18n="btn_save_calendar">Guardar Cambios del Calendario</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Lógica de Carga y Gestión de Datos -->
+  <script src="translations.js"></script>
+  <script src="common.js"></script>
+  <script src="cargar.js"></script>
+</body>
+</html>
