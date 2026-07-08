@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Deserción Estudiantil | Atenas</title>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem("atenas_theme");
+      if (savedTheme !== "dark") {
+        document.documentElement.classList.add("light-theme");
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.classList.add("light-theme");
+        });
+      }
+    })();
+    
+    // Controlador de menú responsivo para móvil
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("mobile-nav-toggle");
+      const sidebar = document.getElementById("sidebar");
+      if (toggle && sidebar) {
+        toggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          sidebar.classList.toggle("open");
+        });
+        document.addEventListener("click", (e) => {
+          if (sidebar.classList.contains("open") && !sidebar.contains(e.target) && e.target !== toggle) {
+            sidebar.classList.remove("open");
+          }
+        });
+      }
+    });
+  </script>
+  
+  <!-- CSS Personalizado -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- CDNs de Dependencias de Terceros -->
+  <!-- Chart.js para Visualización de Gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- PapaParse para procesar CSV de forma robusta -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- SheetJS (XLSX) para procesar Excel (.xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons para Iconos Modernos -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i data-lucide="graduation-cap"></i>
+        </div>
+        <div class="logo-text">
+          <h2>Atenas Risk</h2>
+          <span>Análisis de Deserción</span>
+        </div>
+      </div>
+      
+      <!-- Menú de Navegación -->
+      <nav class="nav-menu">
+        <li class="nav-item active" data-target="view-resumen" id="nav-resumen">
+          <a href="index.html" class="nav-link"><i data-lucide="layout-dashboard"></i> <span data-i18n="menu_summary">Resumen Académico</span></a>
+        </li>
+        <li class="nav-item nav-dropdown" id="nav-dropdown-estudiantes">
+          <button class="nav-link dropdown-toggle">
+            <i data-lucide="users"></i>
+            <span data-i18n="menu_students_parent">Estudiantes</span>
+            <i data-lucide="chevron-down" class="dropdown-chevron"></i>
+          </button>
+          <ul class="nav-sub-menu">
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-completo">
+              <a href="estudiantes.html" class="nav-link"><i data-lucide="list"></i> <span data-i18n="menu_students">Listado completo</span></a>
+            </li>
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-alto">
+              <a href="riesgo_alto.html" class="nav-link"><i data-lucide="alert-triangle"></i> <span data-i18n="menu_risk_high">Riesgo Alto</span></a>
+            </li>
+            <li class="nav-item sub-nav-item" id="nav-estudiantes-medio">
+              <a href="riesgo_medio.html" class="nav-link"><i data-lucide="alert-circle"></i> <span data-i18n="menu_risk_medium">Riesgo Medio</span></a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item" data-target="view-configuracion" id="nav-configuracion">
+          <a href="index.html#configuracion" class="nav-link"><i data-lucide="info"></i> <span data-i18n="menu_methodology">Metodología</span></a>
+        </li>
+        <li class="nav-item" id="nav-asistente">
+          <a href="asistente.html" class="nav-link"><i data-lucide="sparkles"></i> <span data-i18n="menu_assistant">Asistente Virtual</span></a>
+        </li>
+        <li class="nav-item" id="nav-cargar">
+          <a href="cargar.html" class="nav-link"><i data-lucide="database"></i> <span data-i18n="menu_load">Cargar Datos</span></a>
+        </li>
+      </nav>
+      
+      <!-- Script para controlar el dropdown de Estudiantes -->
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const dropdown = document.getElementById("nav-dropdown-estudiantes");
+          const toggle = dropdown ? dropdown.querySelector(".dropdown-toggle") : null;
+          if (toggle && dropdown) {
+            toggle.addEventListener("click", (e) => {
+              e.preventDefault();
+              dropdown.classList.toggle("open");
+            });
+          }
+        });
+      </script>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      
+      <!-- HEADER -->
+      <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button id="mobile-nav-toggle" class="btn-theme-toggle mobile-nav-toggle" title="Menú" style="display: none;">
+            <i data-lucide="menu"></i>
+          </button>
+          <div class="header-title">
+            <h1 id="page-title">Resumen de Rendimiento</h1>
+            <p id="page-subtitle">Carga los registros estudiantiles para evaluar indicadores de deserción y promedios.</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <!-- Selector de Idioma (Toggle) -->
+          <div class="lang-toggle" id="lang-toggle-container">
+            <span class="lang-slider"></span>
+            <button class="lang-btn active" id="lang-btn-es" data-lang="es">ES</button>
+            <button class="lang-btn" id="lang-btn-en" data-lang="en">EN</button>
+          </div>
+
+          <!-- Selector de Periodo Activo -->
+          <div class="period-selector-container" style="display: flex; align-items: center; gap: 8px;">
+            <label for="global-period-select" data-i18n="active_period_lbl" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Ciclo Activo:</label>
+            <select id="global-period-select" class="header-period-select">
+              <!-- Se poblará dinámicamente -->
+            </select>
+          </div>
+          
+          <button id="theme-toggle" class="btn-theme-toggle" data-i18n-title="theme_toggle_tip" title="Cambiar tema">
+            <i id="theme-toggle-icon" data-lucide="sun"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- PANTALLA DE ESTADO VACÍO (CARGA INICIAL) -->
+      <section id="empty-state-section" class="glass-card empty-state" style="padding: 60px 40px;">
+        <div class="empty-state-icon" style="margin-bottom: 16px;">
+          <i data-lucide="database-backup"></i>
+        </div>
+        <h3 data-i18n="empty_state_title">No hay Datos en la Base de Datos</h3>
+        <p data-i18n="empty_state_desc" style="color: var(--text-muted); font-size: 0.88rem; max-width: 500px; margin: 0 auto 20px auto; line-height: 1.5;">
+          No hay registros de calificaciones cargados en el sistema local. Para comenzar a analizar los indicadores de permanencia y promedio, por favor dirígete a la sección de carga para importar un archivo de calificaciones o utilizar datos demo.
+        </p>
+        <a href="cargar.html" class="btn-demo" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+          <i data-lucide="upload-cloud"></i> <span data-i18n="empty_state_btn">Ir a Cargar Datos</span>
+        </a>
+      </section>
+
+      <!-- LOADER / SPINNER -->
+      <div class="loader-container" id="loader-container">
+        <div class="spinner"></div>
+        <p id="loader-text" data-i18n="loader_text">Procesando y calculando niveles de riesgo académico...</p>
+      </div>
+
+      <!-- ==========================================================================
+           VISTA 1: RESUMEN / DASHBOARD (OCULTO POR DEFECTO HASTA CARGAR DATOS)
+           ========================================================================== -->
+      <section id="view-resumen" class="tab-view">
+        
+        <!-- Widget Visual del Calendario del Ciclo -->
+        <div id="cycle-calendar-widget" class="glass-card" style="margin-bottom: 24px; padding: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+              <i data-lucide="calendar" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 id="widget-period-name" style="margin: 0; font-size: 1.15rem; font-family: var(--font-main);">Ciclo 1 - 2026</h3>
+                <span id="widget-period-status" class="status-badge active" style="font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase;">Activo</span>
+              </div>
+              <p id="widget-period-weeks" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">Semana 1 de 20 (Inicio: 01/02/2026 - Fin: 30/06/2026)</p>
+            </div>
+          </div>
+          
+          <!-- Progreso de la Unidad activa -->
+          <div style="flex: 1; min-width: 250px; max-width: 450px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; margin-bottom: 6px;">
+              <span id="widget-active-unit-label" style="color: var(--text-highlight);">Unidad Evaluativa Activa: Unidad 1</span>
+              <span id="widget-active-unit-percent" style="color: var(--color-primary);">25% completado</span>
+            </div>
+            <div class="cycle-progress-bg">
+              <div id="widget-active-unit-progress-bar" style="width: 25%; height: 100%; background: var(--color-primary); border-radius: 3px; transition: width 0.5s ease;"></div>
+            </div>
+          </div>
+
+          <!-- Cuenta regresiva / Alertas -->
+          <div id="widget-countdown-box" style="display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--glass-border); padding: 10px 16px; border-radius: var(--radius-md); min-width: 200px;">
+            <i data-lucide="clock" id="widget-countdown-icon" style="width: 18px; height: 18px; color: var(--color-accent);"></i>
+            <div>
+              <strong id="widget-countdown-title" style="font-size: 0.78rem; display: block; color: var(--text-highlight);">Próxima Evaluación</strong>
+              <span id="widget-countdown-desc" style="font-size: 0.72rem; color: var(--text-muted);">Evaluación 1 en 5 días</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid de KPIs -->
+        <div class="kpi-grid">
+          <!-- KPI 1 -->
+          <div class="glass-card kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title" data-i18n="card_evaluated_students">Estudiantes Analizados</span>
+              <div class="kpi-icon"><i data-lucide="users"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-total-students">0</div>
+            <div class="kpi-subtext" data-i18n="card_evaluated_students_desc">Registros cargados de la base de datos</div>
+          </div>
+          
+          <!-- KPI 2 -->
+          <div class="glass-card kpi-card kpi-high-risk" onclick="window.location.href='riesgo_alto.html'" style="cursor: pointer;">
+            <div class="kpi-header">
+              <span class="kpi-title" data-i18n="card_high_risk">Riesgo Alto (Reprobación)</span>
+              <div class="kpi-icon"><i data-lucide="alert-triangle"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-high-risk">0</div>
+            <div class="kpi-subtext"><span data-i18n="card_high_risk_desc">Estudiantes con promedio menor a</span> <span id="kpi-fail-threshold">6.0</span></div>
+          </div>
+          
+          <!-- KPI 3 -->
+          <div class="glass-card kpi-card kpi-alert-cum" onclick="window.location.href='riesgo_medio.html'" style="cursor: pointer;">
+            <div class="kpi-header">
+              <span class="kpi-title" data-i18n="card_medium_risk">Riesgo Medio (Alerta Promedio)</span>
+              <div class="kpi-icon"><i data-lucide="alert-circle"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-cum-warning">0</div>
+            <div class="kpi-subtext"><span data-i18n="card_medium_risk_desc">Estudiantes con nota entre</span> <span id="kpi-warn-low">6.0</span> <span data-i18n="card_medium_risk_desc_and">y</span> <span id="kpi-warn-high">6.9</span></div>
+          </div>
+          
+          <!-- KPI 4 -->
+          <div class="glass-card kpi-card kpi-safe">
+            <div class="kpi-header">
+              <span class="kpi-title" data-i18n="card_avg_cum">Promedio General Académico</span>
+              <div class="kpi-icon"><i data-lucide="award"></i></div>
+            </div>
+            <div class="kpi-value" id="kpi-average-grade">0.00</div>
+            <div class="kpi-subtext" id="kpi-average-sub" data-i18n="card_avg_cum_desc">Rendimiento global del grupo</div>
+          </div>
+        </div>
+
+        <!-- Fila de Gráficos Principales (Dona + Histograma Notas) -->
+        <div class="charts-grid-main" style="margin-top: 24px;">
+          <!-- Gráfico 1: Dona Distribución de Riesgo -->
+          <div class="glass-card">
+            <div class="chart-title-container">
+              <h3 data-i18n="chart_risk_title">Distribución de Riesgo</h3>
+              <i data-lucide="pie-chart" class="text-muted"></i>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="chart-risk-distribution"></canvas>
+            </div>
+          </div>
+          
+          <!-- Gráfico 3: Histograma Notas Finales -->
+          <div class="glass-card">
+            <div class="chart-title-container">
+              <h3 data-i18n="chart_grades_title">Distribución de Notas Finales</h3>
+              <i data-lucide="activity" class="text-muted"></i>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="chart-grades-histogram"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fila de Gráficos Secundarios (Barras Alertas por Carrera) -->
+        <div class="charts-grid-secondary" style="margin-top: 24px; grid-template-columns: 1fr;">
+          <!-- Gráfico 2: Barras Alertas por Carrera -->
+          <div class="glass-card">
+            <div class="chart-title-container">
+              <h3 data-i18n="chart_career_title">Carreras con Mayor Alerta (Riesgo Alto + Medio)</h3>
+              <i data-lucide="bar-chart-2" class="text-muted"></i>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="chart-careers-alerts"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- El listado de estudiantes ahora reside en estudiantes.html de forma independiente -->
+
+      <!-- ==========================================================================
+           VISTA 3: CONFIGURACIÓN DE ALERTAS (OCULTO POR DEFECTO)
+           ========================================================================== -->
+      <section id="view-configuracion" class="tab-view">
+        <div class="config-layout" style="display: flex; flex-direction: column; gap: 24px; margin-top: 20px;">
+          
+          <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: stretch;">
+            <div class="glass-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+              <div>
+                <h3 style="margin-bottom: 8px; font-size: 1.25rem; font-family: var(--font-main); display: flex; align-items: center; gap: 8px; color: var(--text-highlight);">
+                  <i data-lucide="award" style="color: var(--color-primary);"></i>
+                  <span data-i18n="met_reg_title">Reglamento de Calificaciones Institucional</span>
+                </h3>
+                <p data-i18n="met_reg_desc" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.45;">
+                  Criterios y pesos evaluativos oficiales aplicados de forma invariable en la Universidad para el cálculo del rendimiento académico general.
+                </p>
+ 
+                <!-- Ponderaciones Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                  <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: 16px 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <span data-i18n="met_lab_weight_title" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Ponderación Laboratorios</span>
+                    <span style="font-size: 2.25rem; font-weight: 800; color: var(--color-primary); font-family: var(--font-main);">40%</span>
+                    <p data-i18n="met_lab_weight_desc" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3; max-width: 160px;">Promedio simple de las 4 actividades de laboratorio.</p>
+                  </div>
+                  <div style="background: rgba(255, 255, 255, 0.015); border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: 16px 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <span data-i18n="met_par_weight_title" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Ponderación Parciales</span>
+                    <span style="font-size: 2.25rem; font-weight: 800; color: var(--color-accent); font-family: var(--font-main);">60%</span>
+                    <p data-i18n="met_par_weight_desc" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3; max-width: 160px;">Promedio simple de los 4 exámenes parciales teóricos.</p>
+                  </div>
+                </div>
+ 
+                <!-- Umbrales List -->
+                <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: var(--radius-md); padding: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <i data-lucide="check-circle" style="color: var(--color-risk-low); width: 16px; height: 16px;"></i>
+                      <span data-i18n="met_min_pass_title" style="font-size: 0.8rem; font-weight: 500; color: var(--text-highlight);">Nota Mínima Aprobatoria (Materia)</span>
+                    </div>
+                    <strong style="font-size: 1.05rem; color: var(--color-risk-low); font-family: monospace;">6.0 / 10.0</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <i data-lucide="trending-up" style="color: var(--color-primary); width: 16px; height: 16px;"></i>
+                      <div style="display: flex; flex-direction: column;">
+                        <span data-i18n="met_target_cum_title" style="font-size: 0.8rem; font-weight: 500; color: var(--text-highlight);">Promedio adecuado (Graduación)</span>
+                        <span data-i18n="met_target_cum_desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Promedio mínimo requerido para obtener el título académico.</span>
+                      </div>
+                    </div>
+                    <strong style="font-size: 1.05rem; color: var(--color-primary); font-family: monospace;">7.0 / 10.0</strong>
+                  </div>
+                </div>
+              </div>
+ 
+              <!-- Fórmula visual explicada -->
+              <div style="margin-top: 24px; padding: 14px; background: rgba(99, 102, 241, 0.04); border: 1px solid rgba(99, 102, 241, 0.12); border-radius: var(--radius-md); text-align: center;">
+                <span data-i18n="met_formula_title" style="font-size: 0.65rem; color: var(--color-primary); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: block; margin-bottom: 6px;">Fórmula del Promedio Final</span>
+                <code data-i18n="met_formula_val" style="font-size: 0.82rem; font-family: monospace; color: var(--text-highlight); font-weight: 600;">Nota Final = (Prom. Labs &times; 0.40) + (Prom. Parciales &times; 0.60)</code>
+              </div>
+            </div>
+ 
+            <!-- Panel 2: Clasificación de Alertas -->
+            <div class="glass-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+              <div>
+                <h3 style="margin-bottom: 8px; font-size: 1.25rem; font-family: var(--font-main); display: flex; align-items: center; gap: 8px; color: var(--text-highlight);">
+                  <i data-lucide="shield-alert" style="color: var(--color-risk-high);"></i>
+                  <span data-i18n="met_alerts_title">Metodología de Alertas Académicas</span>
+                </h3>
+                <p data-i18n="met_alerts_desc" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.45;">
+                  Criterios por los cuales la plataforma evalúa y etiqueta el nivel de riesgo en la permanencia estudiantil.
+                </p>
+ 
+                <!-- Niveles de Alertas -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <!-- Alto Riesgo -->
+                  <div style="display: flex; gap: 12px; background: var(--color-risk-high-bg); border: 1px solid var(--color-risk-high-border); border-radius: var(--radius-md); padding: 14px;">
+                    <div style="width: 6px; background: var(--color-risk-high); border-radius: 3px; flex-shrink: 0;"></div>
+                    <div>
+                      <strong data-i18n="met_risk_high_title" style="font-size: 0.85rem; color: var(--alert-danger-text); display: block; margin-bottom: 2px;">Riesgo Alto (Reprobación Detectada)</strong>
+                      <p data-i18n="met_risk_high_desc" style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 0;">
+                        Se activa si el estudiante posee un promedio final ponderado inferior a 6.0, o si reprueba directamente al menos una de las asignaturas inscritas. Representa peligro crítico de rezago o deserción.
+                      </p>
+                    </div>
+                  </div>
+ 
+                  <!-- Medio Riesgo -->
+                  <div style="display: flex; gap: 12px; background: var(--color-risk-medium-bg); border: 1px solid var(--color-risk-medium-border); border-radius: var(--radius-md); padding: 14px;">
+                    <div style="width: 6px; background: var(--color-risk-medium); border-radius: 3px; flex-shrink: 0;"></div>
+                    <div style="display: flex; flex-direction: column;">
+                      <strong data-i18n="met_risk_medium_title" style="font-size: 0.85rem; color: var(--alert-warning-text); display: block; margin-bottom: 2px;">Riesgo Medio (Alerta de Promedio Académico)</strong>
+                      <span data-i18n="met_risk_medium_desc" style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">Estudiante con promedio general entre 6.0 y 6.9. No reprueba ninguna asignatura, pero su promedio acumulado se sitúa por debajo de la meta mínima de graduación. Se recomienda un plan preventivo de elevación de notas.</span>
+                    </div>
+                  </div>
+ 
+                  <!-- Bajo Riesgo -->
+                  <div style="display: flex; gap: 12px; background: var(--color-risk-low-bg); border: 1px solid var(--color-risk-low-border); border-radius: var(--radius-md); padding: 14px;">
+                    <div style="width: 6px; background: var(--color-risk-low); border-radius: 3px; flex-shrink: 0;"></div>
+                    <div>
+                      <strong data-i18n="met_risk_low_title" style="font-size: 0.85rem; color: var(--alert-success-text); display: block; margin-bottom: 2px;">Riesgo Bajo (Permanencia Estable)</strong>
+                      <p data-i18n="met_risk_low_desc" style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 0;">
+                        Estudiantes con un promedio de calificaciones general mayor o igual a 7.0 y sin asignaturas reprobadas. Muestran un avance académico conforme al estándar óptimo universitario.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+ 
+          <!-- Fila Inferior: Funcionamiento y FAQ -->
+          <div class="glass-card" style="padding: 24px;">
+            <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-family: var(--font-main); display: flex; align-items: center; gap: 8px; color: var(--text-highlight);">
+              <i data-lucide="help-circle" style="color: var(--color-accent);"></i>
+              <span data-i18n="met_faq_title">Preguntas Frecuentes y Funcionamiento del Motor</span>
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; font-size: 0.8rem; line-height: 1.45; color: var(--text-muted);">
+              <div>
+                <h4 data-i18n="met_faq_q1" style="color: var(--text-highlight); margin-bottom: 6px; font-size: 0.85rem; font-weight: 600;">¿Cómo calcula el sistema el Puntaje de Riesgo (Risk Score)?</h4>
+                <p data-i18n="met_faq_a1" style="margin-bottom: 16px;">
+                  El motor Atenas genera una prioridad de 0 a 100 para ordenar a los estudiantes en el listado de casos prioritarios. Los estudiantes en <strong>Riesgo Alto</strong> inician con una base de 60 puntos y suben según la proporción de materias reprobadas y la desviación del promedio respecto a la nota mínima de 6.0. Los de <strong>Riesgo Medio</strong> tienen puntuaciones de 20 a 59 según su cercanía con el umbral reprobatorio.
+                </p>
+                <h4 data-i18n="met_faq_q2" style="color: var(--text-highlight); margin-bottom: 6px; font-size: 0.85rem; font-weight: 600;">¿Por qué no se pueden editar los valores de ponderación?</h4>
+                <p data-i18n="met_faq_a2" style="margin-bottom: 0;">
+                  Para garantizar la alineación con las políticas y normativas internas de evaluación académica de la universidad, las ponderaciones del 40% para laboratorios, 60% para parciales y la nota mínima aprobatoria de 6.0 se han configurado como parámetros estables fijos no modificables en el código fuente.
+                </p>
+              </div>
+              <div>
+                <h4 data-i18n="met_faq_q3" style="color: var(--text-highlight); margin-bottom: 6px; font-size: 0.85rem; font-weight: 600;">¿Qué acciones docentes se recomiendan ante una alerta?</h4>
+                <p data-i18n="met_faq_a3" style="margin-bottom: 16px;">
+                  Cada nivel de riesgo está acompañado de sugerencias automáticas. Al visualizar la **Ficha Técnica** del estudiante, en la pestaña derecha se listará un **Diagnóstico Académico** detallando en qué actividades específicas (por ejemplo, Laboratorio 2 o Parcial 1) falló el estudiante, junto con un **Plan de Acompañamiento** con guías de asesoría.
+                </p>
+                <h4 data-i18n="met_faq_q4" style="color: var(--text-highlight); margin-bottom: 6px; font-size: 0.85rem; font-weight: 600;">¿Con qué frecuencia se procesan los cambios de notas?</h4>
+                <p data-i18n="met_faq_a4" style="margin-bottom: 0;">
+                  El cálculo es local e instantáneo. Al importar un archivo actualizado de notas en la sección <strong>Cargar Datos</strong>, el motor recalcula automáticamente la situación académica de la base de datos de estudiantes cargada de forma inmediata.
+                </p>
+              </div>
+            </div>
+          </div>
+ 
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE DETALLE / FICHA TÉCNICA DEL ESTUDIANTE (AGRUPADO)
+       ========================================================================== -->
+  <div class="modal-overlay" id="student-modal">
+    <div class="glass-card modal-card" style="max-width: 980px; padding: 20px; width: 95%; max-height: 90vh;">
+      
+      <!-- Encabezado del Perfil y Resumen de Indicadores Clave -->
+      <div class="modal-header-profile" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <!-- Información del Estudiante (Izquierda) -->
+        <div class="profile-main-info" style="display: flex; align-items: center; gap: 14px;">
+          <div class="profile-avatar" id="modal-avatar" style="width: 48px; height: 48px; font-size: 1.25rem; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-weight: 700; background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); color: var(--text-highlight); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">AM</div>
+          <div class="profile-text-names">
+            <h3 id="modal-student-name" style="font-size: 1.25rem; font-weight: 700; color: var(--text-highlight); margin: 0;">Apellidos, Nombres</h3>
+            <div class="profile-meta-grid" style="margin-top: 4px; font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <span>Carnet: <strong id="modal-student-carnet" style="color: var(--text-highlight); font-family: monospace;">00000000</strong></span>
+              <span>Carrera: <strong id="modal-student-carrera" style="color: var(--text-highlight);">ING01</strong></span>
+              <span style="display: none;">Registros: <strong id="modal-student-registros-count">0 asignaturas</strong></span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Tarjetas de Estadísticas (Derecha) -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <!-- Badge de Riesgo (oculto o no utilizado por JS, pero conservado para evitar errores de referencia) -->
+          
+          <!-- Tarjeta Promedio General -->
+          <div class="stat-box-mini">
+            <span data-i18n="modal_lbl_average" style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; display: block; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 2px;">Promedio general</span>
+            <span style="font-size: 1.15rem; font-weight: 800; color: var(--text-highlight); font-family: var(--font-main); display: block;"><span id="modal-cum-value">0.00</span><span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/10</span></span>
+            <!-- Tiny progress bar -->
+            <div style="height: 3px; background: rgba(255,255,255,0.08); border-radius: 1.5px; width: 100%; overflow: hidden; margin-top: 3px;">
+              <div id="modal-cum-progress" style="height: 100%; width: 0%; background: var(--color-primary); transition: width 0.4s ease;"></div>
+            </div>
+          </div>
+          
+          <!-- Tarjeta Asignaturas Inscritas -->
+          <div class="stat-box-mini">
+            <span data-i18n="modal_lbl_enrolled" style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; display: block; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 2px;">Inscritas</span>
+            <span id="modal-subjects-count" style="font-size: 1.15rem; font-weight: 800; color: var(--text-highlight); font-family: var(--font-main); display: block; line-height: 1.2;">0</span>
+          </div>
+          
+          <!-- Tarjeta Asignaturas Reprobadas -->
+          <div class="stat-box-mini risk-high">
+            <span data-i18n="modal_lbl_failing" style="font-size: 0.62rem; color: var(--color-risk-high); text-transform: uppercase; display: block; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 2px;">Reprobadas</span>
+            <span id="modal-reprobando-count" style="font-size: 1.15rem; font-weight: 800; color: var(--color-risk-high); font-family: var(--font-main); display: block; line-height: 1.2;">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid de Ficha Detallada (Distribución en Dos Columnas según Wireframe) -->
+      <div class="modal-details-grid" style="display: grid; grid-template-columns: 1fr 1.1fr; gap: 16px; align-items: stretch;">
+        <!-- Columna Izquierda: Historial de Notas y Alertas Académicas -->
+        <div style="display: flex; flex-direction: column; gap: 14px; height: 100%;">
+          <!-- Historial de Notas (Tabla) -->
+          <div class="glass-card" style="padding: 12px; background: rgba(255,255,255,0.01); border-color: var(--glass-border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px; width: 100%;">
+              <h4 data-i18n="modal_history_title" style="font-size: 0.85rem; margin: 0; color: var(--text-highlight); border-left: 3px solid var(--color-accent); padding-left: 8px; font-weight: 600; line-height: 24px; display: flex; align-items: center;">Historial de Notas</h4>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; height: 24px;">
+                <label for="modal-student-period-select" data-i18n="modal_cycle_lbl" style="font-weight: 700; color: var(--text-muted); margin: 0; line-height: 24px;">Ciclo:</label>
+                <select id="modal-student-period-select" class="header-period-select" style="height: 24px; min-width: 110px; padding: 2px 20px 2px 8px; font-size: 0.7rem; background-color: var(--bg-secondary); margin: 0; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); color: var(--text-main); font-weight: 600; cursor: pointer; line-height: 1;">
+                  <!-- Se poblará dinámicamente -->
+                </select>
+                <span id="modal-student-unit-legend" style="font-size: 0.7rem; color: var(--color-accent); font-weight: 600; line-height: 24px;"></span>
+              </div>
+            </div>
+            <div class="table-container" style="max-height: 180px; overflow-y: auto; margin-top: 0;">
+              <table class="student-table" style="font-size: 0.75rem;" id="modal-subjects-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="modal_history_materia">Asignatura</th>
+                    <th data-i18n="modal_history_grade" style="text-align: center;">Nota</th>
+                    <th style="text-align: center; display: none;">Período</th>
+                    <th data-i18n="modal_history_status" style="text-align: center;">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="modal-subjects-table-body">
+                  <!-- Filas inyectadas por JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Panel de Alertas Académicas -->
+          <div class="glass-card" style="padding: 12px; background: rgba(255,255,255,0.01); border-color: var(--glass-border); flex-grow: 1; display: flex; flex-direction: column;">
+            <h4 data-i18n="modal_alerts_title" style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-highlight); border-left: 3px solid var(--color-risk-high); padding-left: 8px; font-weight: 600; line-height: 1.2;">Alertas Académicas</h4>
+            <div id="modal-alerts-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 2px; flex-grow: 1; min-height: 120px;">
+              <!-- Alertas dinámicas -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Columna Derecha: Nota de la Asignatura, Diagnóstico General y Plan de Acompañamiento -->
+        <div style="display: flex; flex-direction: column; gap: 14px; height: 100%;">
+          <!-- Detalle de Calificaciones Materia Seleccionada -->
+          <div class="glass-card" id="modal-subject-detail-card" style="padding: 12px; background: rgba(255,255,255,0.015); border-color: var(--glass-border);">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px; color: var(--color-primary); display: flex; justify-content: space-between; align-items: flex-start; font-weight: 600; line-height: 1.3; gap: 12px;">
+              <span style="color: var(--color-primary); word-break: break-word;"><span data-i18n="modal_detail_materia_prefix">Materia:</span> <span id="modal-detail-materia-name" style="color: var(--text-highlight); font-weight: 600;">Seleccione...</span></span>
+              <span id="modal-detail-materia-grade" style="font-family: monospace; font-size: 0.85rem; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; color: var(--text-highlight); white-space: nowrap; flex-shrink: 0;">0.00</span>
+            </h4>
+            
+            <div style="font-size: 0.68rem; color: var(--text-muted); margin-bottom: 10px; margin-top: -4px; word-break: break-word; line-height: 1.3;">
+              <span data-i18n="modal_detail_teacher_prefix">Docente:</span> <span id="modal-detail-materia-teacher" style="color: var(--text-highlight); font-weight: 500;">-</span> &nbsp;|&nbsp; <span data-i18n="modal_detail_group_prefix">Grupo:</span> <span id="modal-detail-materia-group" style="color: var(--text-highlight); font-weight: 500;">-</span>
+            </div>
+ 
+            <!-- Notas de Labs y Parciales -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.72rem;">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); margin-bottom: 4px;">
+                  <span data-i18n="modal_detail_labs_lbl">Labs</span>
+                  <strong id="modal-detail-materia-labs-avg" style="color: var(--text-highlight);">0.00</strong>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                  <div class="grade-sub-card" id="modal-card-lab-1" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">L1</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-lab-1">0.0</span></div>
+                  <div class="grade-sub-card" id="modal-card-lab-2" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">L2</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-lab-2">0.0</span></div>
+                  <div class="grade-sub-card" id="modal-card-lab-3" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">L3</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-lab-3">0.0</span></div>
+                  <div class="grade-sub-card" id="modal-card-lab-4" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">L4</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-lab-4">0.0</span></div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); margin-bottom: 4px;">
+                  <span data-i18n="modal_detail_pars_lbl">Parciales</span>
+                  <strong id="modal-detail-materia-pars-avg" style="color: var(--text-highlight);">0.00</strong>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                  <div class="grade-sub-card" id="modal-card-par-1" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">P1</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-par-1">0.0</span></div>
+                  <div class="grade-sub-card" id="modal-card-par-2" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">P2</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-par-2">0.0</span></div>
+                  <div class="grade-sub-card" id="modal-card-par-3" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">P3</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-par-3">0.0</span></div>
+                  <div class="grade-sub-card" id="modal-card-par-4" style="padding: 4px 1px; text-align: center;"><span style="font-size: 0.52rem; color: var(--text-muted); display: block; margin-bottom: 1px;">P4</span><span style="font-size: 0.72rem; font-weight: 600;" id="modal-val-par-4">0.0</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Diagnóstico General -->
+          <div class="alert-indicator-card" id="modal-diagnostic-card" style="padding: 10px 12px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="alert-triangle" id="modal-diagnostic-icon" style="width: 18px; height: 18px; flex-shrink: 0;"></i>
+            <div style="overflow: hidden;">
+              <strong id="modal-diagnostic-title" style="font-size: 0.78rem; display: block; line-height: 1.2;">Riesgo Detectado</strong>
+              <p id="modal-diagnostic-desc" style="margin-top: 2px; line-height: 1.3; font-size: 0.72rem; color: inherit; opacity: 0.9; margin-bottom: 0;">
+                Detalle del diagnóstico del estudiante.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Plan de Acompañamiento -->
+          <div class="glass-card" style="padding: 12px; background: rgba(255,255,255,0.01); border-color: var(--glass-border); flex-grow: 1; display: flex; flex-direction: column;">
+            <h4 class="section-title-modal" data-i18n="modal_recommendations_title" style="font-size: 0.85rem; margin-bottom: 8px; font-weight: 600; line-height: 1.2; color: var(--color-primary); border-left: 3px solid var(--color-primary); padding-left: 8px;">Plan de Acompañamiento</h4>
+            <div class="recommendations-list" id="modal-recommendations-container" style="overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; flex-grow: 1; min-height: 120px;">
+              <!-- Recomendaciones dinámicas -->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer del Modal -->
+      <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+        <span data-i18n="footer_copyright" style="font-size: 0.7rem; color: var(--text-muted);">
+          Plataforma de Permanencia Estudiantil Atenas &copy; 2026
+        </span>
+        <button class="btn-demo" id="btn-close-modal" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: var(--text-main); padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 6px;">
+          <i data-lucide="x"></i> <span data-i18n="modal_close_btn">Cerrar Ficha</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Lógica Principal de la Aplicación -->
+  <script src="translations.js"></script>
+  <script src="common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
