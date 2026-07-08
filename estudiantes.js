@@ -811,7 +811,7 @@ function populateFilterDropdowns() {
 
   // 4. Actualizar Carrera Dropdown
   const prevCarrera = carreraFilter;
-  carreraSelect.innerHTML = '<option value="all">Todas las carreras</option>';
+  carreraSelect.innerHTML = `<option value="all">${t("filter_opt_all_careers")}</option>`;
   availableCarreras.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c;
@@ -827,7 +827,7 @@ function populateFilterDropdowns() {
 
   // 5. Actualizar Materia Dropdown
   const prevMateria = materiaFilter;
-  materiaSelect.innerHTML = '<option value="all">Todas las materias</option>';
+  materiaSelect.innerHTML = `<option value="all">${t("filter_opt_all_subjects")}</option>`;
   availableMaterias.forEach(m => {
     const opt = document.createElement("option");
     opt.value = m;
@@ -843,7 +843,7 @@ function populateFilterDropdowns() {
 
   // 6. Actualizar Docente Dropdown
   const prevDocente = docenteFilter;
-  docenteSelect.innerHTML = '<option value="all">Todos los docentes</option>';
+  docenteSelect.innerHTML = `<option value="all">${t("filter_opt_all_teachers")}</option>`;
   availableDocentes.forEach(d => {
     const opt = document.createElement("option");
     opt.value = d;
@@ -917,9 +917,9 @@ function filterAndRenderStudents() {
   const countToShow = isFilterActive ? state.filteredStudents.length : state.students.length;
   if (labelEl) {
     if (countToShow === 1) {
-      labelEl.textContent = "1 estudiante encontrado";
+      labelEl.textContent = t("filter_count_singular");
     } else {
-      labelEl.textContent = `${countToShow} estudiantes encontrados`;
+      labelEl.textContent = t("filter_count_plural", { count: countToShow });
     }
   }
 
@@ -954,7 +954,7 @@ function renderActiveFiltersBadges() {
 
   if (searchQuery !== "") {
     activeFilters.push({
-      label: `Búsqueda: "${searchQuery}"`,
+      label: t("badge_filter_search", { val: searchQuery }),
       clear: () => {
         state.filters.search = "";
         if (searchInput) searchInput.value = "";
@@ -966,7 +966,7 @@ function renderActiveFiltersBadges() {
     const option = riskSelect.querySelector(`option[value="${riskFilter}"]`);
     const text = option ? option.text : riskFilter;
     activeFilters.push({
-      label: `Riesgo: ${text}`,
+      label: t("badge_filter_risk", { val: text }),
       clear: () => {
         state.filters.risk = "all";
         riskSelect.value = "all";
@@ -978,7 +978,7 @@ function renderActiveFiltersBadges() {
     const option = carreraSelect.querySelector(`option[value="${carreraFilter}"]`);
     const text = option ? option.text : (CAREER_NAMES[carreraFilter] || carreraFilter);
     activeFilters.push({
-      label: `Carrera: ${text}`,
+      label: t("badge_filter_career", { val: text }),
       clear: () => {
         state.filters.carrera = "all";
         carreraSelect.value = "all";
@@ -988,7 +988,7 @@ function renderActiveFiltersBadges() {
 
   if (materiaFilter !== "all") {
     activeFilters.push({
-      label: `Materia: ${materiaFilter}`,
+      label: t("badge_filter_subject", { val: materiaFilter }),
       clear: () => {
         state.filters.materia = "all";
         if (materiaSelect) materiaSelect.value = "all";
@@ -998,7 +998,7 @@ function renderActiveFiltersBadges() {
 
   if (docenteFilter !== "all") {
     activeFilters.push({
-      label: `Docente: ${docenteFilter}`,
+      label: t("badge_filter_teacher", { val: docenteFilter }),
       clear: () => {
         state.filters.docente = "all";
         if (docenteSelect) docenteSelect.value = "all";

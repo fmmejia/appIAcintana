@@ -1291,7 +1291,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Contenedor Drag-and-Drop Grande */
 .dropzone-large {
   width: 100%;
-  max-width: 600px;
+  max-width: 100%;
   border: 2px dashed rgba(99, 102, 241, 0.3);
   background: rgba(15, 19, 31, 0.4);
   border-radius: var(--radius-lg);
@@ -2409,6 +2409,430 @@ body.light-theme .lang-btn.active {
 /* Mapeo de posición de slider */
 .lang-toggle.lang-en .lang-slider {
   transform: translateX(36px);
+}
+
+/* Barra de progreso de ciclo en el widget */
+.cycle-progress-bg {
+  width: 100%;
+  height: 8px; /* Slightly taller to accommodate border nicely */
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+body.light-theme .cycle-progress-bg {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Indicador de calendario en inputs de tipo date */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+body.light-theme input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+  opacity: 0.6;
+}
+
+body.light-theme input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.9;
+}
+
+/* Contenedor de Notificaciones Toast */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+  width: calc(100% - 48px);
+}
+
+/* Toast individual */
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-main);
+  position: relative;
+  overflow: hidden;
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.3s ease;
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-item.toast-fade-out {
+  transform: translateX(120%);
+  opacity: 0;
+}
+
+/* Iconos de Toast */
+.toast-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+}
+
+.toast-success .toast-icon { color: var(--color-risk-low); }
+.toast-danger .toast-icon { color: var(--color-risk-high); }
+.toast-warning .toast-icon { color: var(--color-risk-medium); }
+.toast-info .toast-icon { color: var(--color-primary); }
+
+/* Bordes de color izquierdo para énfasis */
+.toast-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+.toast-success::before { background: var(--color-risk-low); }
+.toast-danger::before { background: var(--color-risk-high); }
+.toast-warning::before { background: var(--color-risk-medium); }
+.toast-info::before { background: var(--color-primary); }
+
+/* Contenido de Toast */
+.toast-content {
+  flex-grow: 1;
+}
+
+.toast-content p {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Botón cerrar */
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: var(--transition-smooth);
+}
+
+.toast-close:hover {
+  color: var(--text-highlight);
+}
+
+/* Adaptación móvil */
+@media (max-width: 600px) {
+  .toast-container {
+    top: 16px;
+    right: 24px;
+    left: 24px;
+    max-width: none;
+    width: auto;
+  }
+}
+
+/* ==========================================================================
+   MODAL DE CONFIRMACIÓN PREMIUM
+   ========================================================================== */
+
+/* Overlay del modal de confirmación */
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 14, 26, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.confirm-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Tarjeta del modal */
+.confirm-modal-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.4);
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.confirm-modal-overlay.active .confirm-modal-card {
+  transform: scale(1) translateY(0);
+}
+
+/* Envoltura del icono */
+.confirm-modal-icon-wrapper {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 80px;
+  height: 80px;
+}
+
+/* Título y texto */
+.confirm-modal-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-highlight);
+  margin-bottom: 12px;
+  font-family: 'Outfit', sans-serif;
+}
+
+.confirm-modal-text {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  white-space: pre-line;
+}
+
+/* Botones de acción */
+.confirm-modal-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  border: none;
+}
+
+.confirm-btn-cancel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+}
+
+.confirm-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-highlight);
+}
+
+.confirm-btn-confirm {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.confirm-btn-confirm:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+
+/* Variaciones de botón confirmar por tipo */
+.confirm-modal-card.type-danger .confirm-btn-confirm,
+.confirm-modal-card.type-error .confirm-btn-confirm {
+  background: var(--color-risk-high);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+.confirm-modal-card.type-danger .confirm-btn-confirm:hover,
+.confirm-modal-card.type-error .confirm-btn-confirm:hover {
+  background: #dc2626;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+
+.confirm-modal-card.type-warning .confirm-btn-confirm {
+  background: var(--color-risk-medium);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+.confirm-modal-card.type-warning .confirm-btn-confirm:hover {
+  background: #d97706;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
+}
+
+/* Iconos de Alerta Animados (Estilo SweetAlert2 Premium) */
+
+/* Warning */
+.confirm-icon-warning {
+  border: 3px solid var(--color-risk-medium);
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-risk-medium);
+  font-size: 2.8rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  animation: warningBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes warningBounce {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Success SVG */
+.checkmark-svg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 3;
+  stroke: var(--color-risk-low);
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px var(--color-risk-low);
+  animation: fillSuccess 0.4s ease-in-out 0.4s forwards, scaleSuccess 0.3s ease-in-out 0.9s both;
+}
+
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 3;
+  stroke-miterlimit: 10;
+  stroke: var(--color-risk-low);
+  fill: none;
+  animation: strokeSuccess 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  stroke-width: 4;
+  stroke: var(--color-risk-low);
+  animation: strokeSuccess 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+}
+
+@keyframes strokeSuccess {
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes fillSuccess {
+  100% { box-shadow: inset 0px 0px 0px 30px rgba(16, 185, 129, 0.05); }
+}
+
+@keyframes scaleSuccess {
+  0%, 100% { transform: none; }
+  50% { transform: scale3d(1.1, 1.1, 1); }
+}
+
+/* Error SVG */
+.error-svg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 3;
+  stroke: var(--color-risk-high);
+  stroke-miterlimit: 10;
+  animation: fillError 0.4s ease-in-out 0.4s forwards, shakeError 0.5s ease-in-out 0.6s both;
+}
+
+.error-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 3;
+  stroke-miterlimit: 10;
+  stroke: var(--color-risk-high);
+  fill: none;
+  animation: strokeSuccess 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.error-line-1, .error-line-2 {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  stroke-width: 4;
+  stroke: var(--color-risk-high);
+}
+
+.error-line-1 {
+  animation: strokeSuccess 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.5s forwards;
+}
+
+.error-line-2 {
+  animation: strokeSuccess 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.7s forwards;
+}
+
+@keyframes fillError {
+  100% { box-shadow: inset 0px 0px 0px 30px rgba(239, 68, 68, 0.05); }
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-4px); }
+  30%, 60%, 90% { transform: translateX(4px); }
+}
+
+/* Info */
+.confirm-icon-info {
+  border: 3px solid var(--color-primary);
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  font-size: 2.8rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  animation: warningBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 

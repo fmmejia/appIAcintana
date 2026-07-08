@@ -224,9 +224,12 @@ function setupEventListeners() {
   const btnSettings = document.getElementById("btn-api-settings");
   if (btnSettings) {
     btnSettings.addEventListener("click", () => {
-      if (confirm(t("confirm_change_api"))) {
-        clearAIConfig();
-      }
+      showConfirmModal(t("confirm_title_api"), t("confirm_change_api"), "warning")
+        .then(confirmed => {
+          if (confirmed) {
+            clearAIConfig();
+          }
+        });
     });
   }
 
@@ -234,9 +237,12 @@ function setupEventListeners() {
   const btnClearChat = document.getElementById("btn-clear-chat");
   if (btnClearChat) {
     btnClearChat.addEventListener("click", () => {
-      if (confirm(t("confirm_clear_chat"))) {
-        resetChatHistory();
-      }
+      showConfirmModal(t("confirm_title_chat"), t("confirm_clear_chat"), "warning")
+        .then(confirmed => {
+          if (confirmed) {
+            resetChatHistory();
+          }
+        });
     });
   }
 

@@ -247,35 +247,38 @@ function setupEventListeners() {
         return;
       }
 
-      if (confirm(t("confirm_delete_cycle", { name: periodToDelete }))) {
-        // 1. Eliminar de la configuración
-        delete config[periodToDelete];
-        savePeriodsConfig(config);
+      showConfirmModal(t("confirm_title_delete"), t("confirm_delete_cycle", { name: periodToDelete }), "danger")
+        .then(confirmed => {
+          if (confirmed) {
+            // 1. Eliminar de la configuración
+            delete config[periodToDelete];
+            savePeriodsConfig(config);
 
-        // 2. Eliminar estudiantes correspondientes a este periodo
-        state.students = state.students.filter(s => s.periodo !== periodToDelete);
-        persistData();
+            // 2. Eliminar estudiantes correspondientes a este periodo
+            state.students = state.students.filter(s => s.periodo !== periodToDelete);
+            persistData();
 
-        // 3. Si el periodo eliminado era el activo, cambiar el activo
-        const currentActive = getActivePeriod();
-        if (currentActive === periodToDelete) {
-          const remainingPeriods = Object.keys(config).sort();
-          setActivePeriod(remainingPeriods[0]);
-          
-          // Sincronizar el selector global
-          const globalSelect = document.getElementById("global-period-select");
-          if (globalSelect) {
-            globalSelect.value = remainingPeriods[0];
-            globalSelect.dispatchEvent(new Event("change"));
+            // 3. Si el periodo eliminado era el activo, cambiar el activo
+            const currentActive = getActivePeriod();
+            if (currentActive === periodToDelete) {
+              const remainingPeriods = Object.keys(config).sort();
+              setActivePeriod(remainingPeriods[0]);
+              
+              // Sincronizar el selector global
+              const globalSelect = document.getElementById("global-period-select");
+              if (globalSelect) {
+                globalSelect.value = remainingPeriods[0];
+                globalSelect.dispatchEvent(new Event("change"));
+              }
+            }
+
+            // 4. Actualizar selectores e interfaz
+            initPeriodSelectors();
+            updateDatabaseStatusUI();
+
+            alert(t("msg_cycle_deleted", { name: periodToDelete }));
           }
-        }
-
-        // 4. Actualizar selectores e interfaz
-        initPeriodSelectors();
-        updateDatabaseStatusUI();
-
-        alert(t("msg_cycle_deleted", { name: periodToDelete }));
-      }
+        });
     });
   }
 
@@ -768,12 +771,15 @@ function clearDatabase() {
     return;
   }
 
-  if (confirm(t("confirm_clear_db"))) {
-    state.students = [];
-    localStorage.removeItem("atenas_students");
-    updateDatabaseStatusUI();
-    alert(t("msg_db_cleared"));
-  }
+  showConfirmModal(t("confirm_title_clear_db"), t("confirm_clear_db"), "danger")
+    .then(confirmed => {
+      if (confirmed) {
+        state.students = [];
+        localStorage.removeItem("atenas_students");
+        updateDatabaseStatusUI();
+        alert(t("msg_db_cleared"));
+      }
+    });
 }
 
 // GENERADOR DE DATOS DE SIMULACIÓN REALISTAS (CARGA DEMO ACTUALIZADA)

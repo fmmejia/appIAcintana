@@ -273,7 +273,7 @@ function t(key, params) {
     return key;
   }
   
-  if (params) {
+  if (params && typeof params === "object") {
     Object.keys(params).forEach(pKey => {
       text = text.replace(new RegExp(`{${pKey}}`, "g"), params[pKey]);
     });
@@ -417,4 +417,218 @@ window.addEventListener("storage", (e) => {
 document.addEventListener("DOMContentLoaded", () => {
   initLanguageSelector();
 });
+
+// Sistema de Notificaciones Toast Personalizado para reemplazar alert()
+window.showToast = function(message, type = 'info') {
+  // Asegurarnos de tener el contenedor en el DOM
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+
+  // Crear el elemento del toast
+  const toast = document.createElement("div");
+  toast.className = `toast-item toast-${type}`;
+
+  // Mapear icono según el tipo
+  let iconName = "info";
+  if (type === "success") iconName = "check-circle";
+  else if (type === "warning") iconName = "alert-circle";
+  else if (type === "danger") iconName = "alert-triangle";
+
+  toast.innerHTML = `
+    <i class="toast-icon" data-lucide="${iconName}"></i>
+    <div class="toast-content">
+      <p>${message}</p>
+    </div>
+    <button class="toast-close">&times;</button>
+  `;
+
+  // Añadir al contenedor
+  container.appendChild(toast);
+
+  // Inicializar icono de Lucide si está disponible
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons({
+      attrs: {
+        class: 'toast-icon'
+      }
+    });
+  }
+
+  // Evento para cerrar manualmente
+  const closeBtn = toast.querySelector(".toast-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      closeToast(toast);
+    });
+  }
+
+  // Autoeliminar después de 5 segundos
+  const autoTimeout = setTimeout(() => {
+    closeToast(toast);
+  }, 5000);
+
+  function closeToast(el) {
+    if (el && el.parentNode) {
+      el.classList.add("toast-fade-out");
+      el.addEventListener("animationend", () => {
+        if (el && el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+      // Fallback por si no dispara animationend
+      setTimeout(() => {
+        if (el && el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      }, 350);
+    }
+    clearTimeout(autoTimeout);
+  }
+};
+
+// Sobrescribir el alert nativo del navegador
+window.alert = function(message) {
+  if (typeof message !== "string") {
+    message = String(message || "");
+  }
+  let type = "info";
+  const lower = message.toLowerCase();
+  if (lower.includes("exito") || lower.includes("success") || lower.includes("guardado") || lower.includes("cargado") || lower.includes("exitosamente")) {
+    type = "success";
+  } else if (lower.includes("error") || lower.includes("invalido") || lower.includes("invalid") || lower.includes("no soportado") || lower.includes("fallo") || lower.includes("incorrecto") || lower.includes("eliminar") || lower.includes("completar") || lower.includes("ingrese")) {
+    type = "danger";
+  } else if (lower.includes("advertencia") || lower.includes("warning") || lower.includes("cuidado") || lower.includes("atencion") || lower.includes("atención")) {
+    type = "warning";
+  }
+  window.showToast(message, type);
+};
+
+// Modal de Confirmación Estilizado Premium (Reemplazo de confirm())
+window.showConfirmModal = function(title, text, type = 'warning', confirmBtnText = '', cancelBtnText = '') {
+  return new Promise((resolve) => {
+    // Asegurarnos de remover cualquier modal previo si existiera
+    const activeOverlays = document.querySelectorAll(".confirm-modal-overlay");
+    activeOverlays.forEach(el => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
+
+    // Crear overlay
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-modal-overlay";
+    
+    // Generar icono animado según tipo
+    let iconHTML = "";
+    if (type === "warning") {
+      iconHTML = `
+        <div class="confirm-icon confirm-icon-warning">
+          <span>!</span>
+        </div>
+      `;
+    } else if (type === "success") {
+      iconHTML = `
+        <div class="confirm-icon">
+          <svg class="checkmark-svg" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+      `;
+    } else if (type === "error" || type === "danger") {
+      iconHTML = `
+        <div class="confirm-icon">
+          <svg class="error-svg" viewBox="0 0 52 52">
+            <circle class="error-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="error-line-1" fill="none" d="M16 16 36 36"/>
+            <path class="error-line-2" fill="none" d="M36 16 16 36"/>
+          </svg>
+        </div>
+      `;
+    } else { // info
+      iconHTML = `
+        <div class="confirm-icon confirm-icon-info">
+          <span>i</span>
+        </div>
+      `;
+    }
+    
+    // Traducir dinámicamente los textos de los botones si el usuario no los pasa específicos
+    const finalConfirmText = confirmBtnText || (t("modal_confirm_yes") !== "modal_confirm_yes" ? t("modal_confirm_yes") : "Sí, proceder");
+    const finalCancelText = cancelBtnText || (t("modal_confirm_cancel") !== "modal_confirm_cancel" ? t("modal_confirm_cancel") : "Cancelar");
+
+    overlay.innerHTML = `
+      <div class="confirm-modal-card type-${type}">
+        <div class="confirm-modal-icon-wrapper">
+          ${iconHTML}
+        </div>
+        <h3 class="confirm-modal-title">${title}</h3>
+        <p class="confirm-modal-text">${text}</p>
+        <div class="confirm-modal-actions">
+          <button class="confirm-btn confirm-btn-cancel">${finalCancelText}</button>
+          <button class="confirm-btn confirm-btn-confirm">${finalConfirmText}</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Forzar reflow para animación
+    overlay.offsetHeight; 
+    overlay.classList.add("active");
+    
+    const confirmBtn = overlay.querySelector(".confirm-btn-confirm");
+    const cancelBtn = overlay.querySelector(".confirm-btn-cancel");
+    
+    let resolved = false;
+
+    const closeWithResult = (result) => {
+      if (resolved) return;
+      resolved = true;
+
+      overlay.classList.remove("active");
+      
+      const transitionEndHandler = () => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+        resolve(result);
+      };
+
+      overlay.addEventListener("transitionend", transitionEndHandler);
+      
+      // Fallback
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+        resolve(result);
+      }, 350);
+    };
+    
+    confirmBtn.addEventListener("click", () => closeWithResult(true));
+    cancelBtn.addEventListener("click", () => closeWithResult(false));
+    
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        closeWithResult(false);
+      }
+    });
+
+    const handleKeydown = (e) => {
+      if (e.key === "Escape") {
+        closeWithResult(false);
+        document.removeEventListener("keydown", handleKeydown);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        closeWithResult(true);
+        document.removeEventListener("keydown", handleKeydown);
+      }
+    };
+    document.addEventListener("keydown", handleKeydown);
+  });
+};
 

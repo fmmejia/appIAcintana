@@ -68,7 +68,7 @@
         <li class="nav-item nav-dropdown" id="nav-dropdown-estudiantes">
           <button class="nav-link dropdown-toggle">
             <i data-lucide="users"></i>
-            <span data-i18n="menu_students">Ficha Estudiantes</span>
+            <span data-i18n="menu_students_parent">Estudiantes</span>
             <i data-lucide="chevron-down" class="dropdown-chevron"></i>
           </button>
           <ul class="nav-sub-menu">
@@ -153,20 +153,19 @@
 
       <!-- SECCIÓN DE CARGA Y CONTROL -->
       <section id="view-cargar" class="tab-view active">
-        
         <div class="config-layout" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin-top: 20px;">
           
           <!-- Columna Izquierda: Zona de Drop & Drop para Subir Archivo -->
-          <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div class="glass-card" style="display: flex; flex-direction: column; gap: 16px; justify-content: flex-start; height: 100%;">
             <div>
               <h3 data-i18n="panel_import_title" style="margin-bottom: 8px; font-size: 1.25rem; font-family: var(--font-main);">Cargar Reporte Académico</h3>
-              <p data-i18n="panel_import_desc" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.45;">
+              <p data-i18n="panel_import_desc" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; line-height: 1.45;">
                 Sube el reporte de calificaciones de los estudiantes en formato CSV (delimitado por punto y coma) o Excel (.xlsx, .xls) con las columnas correspondientes de docentes, asignaturas, carnet, laboratorios y parciales.
               </p>
             </div>
             
             <!-- Selector de Periodo de Destino de la Carga -->
-            <div style="margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+            <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
               <label for="import-period-select" data-i18n="import_period_lbl" style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Ciclo Académico de Destino:</label>
               <div style="display: flex; gap: 10px; align-items: center;">
                 <select id="import-period-select" class="header-period-select" style="flex: 1; height: 38px; min-width: auto; font-size: 0.85rem; background-color: var(--bg-secondary);">
@@ -182,7 +181,7 @@
             </div>
 
             <!-- Drag & Drop Zone -->
-            <div class="dropzone-large" id="large-dropzone" style="margin-bottom: 20px; text-align: center;">
+            <div class="dropzone-large" id="large-dropzone" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 180px;">
               <i data-lucide="upload-cloud" style="font-size: 2.5rem; color: var(--color-primary); margin-bottom: 12px;"></i>
               <h4 data-i18n="dropzone_title" style="font-size: 1rem; color: var(--text-highlight); margin-bottom: 4px;">Arrastra tu archivo aquí</h4>
               <p data-i18n="dropzone_sub" style="font-size: 0.75rem; color: var(--text-muted);">Soporta formatos .xlsx, .xls y .csv (delimitados por `;` )</p>

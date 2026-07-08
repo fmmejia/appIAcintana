@@ -70,7 +70,7 @@
         <li class="nav-item nav-dropdown open" id="nav-dropdown-estudiantes">
           <button class="nav-link dropdown-toggle">
             <i data-lucide="users"></i>
-            <span data-i18n="menu_students">Ficha Estudiantes</span>
+            <span data-i18n="menu_students_parent">Estudiantes</span>
             <i data-lucide="chevron-down" class="dropdown-chevron"></i>
           </button>
           <ul class="nav-sub-menu">
@@ -158,11 +158,11 @@
 
         <!-- Barra de Filtros Rediseñada -->
         <div class="filters-bar-redesigned">
-          <div class="filters-title">Filtros</div>
+          <div class="filters-title" data-i18n="filters_title">Filtros</div>
           <div class="filters-grid">
             <!-- Buscar por nombre o carnet -->
             <div class="filter-group-item search-field-container">
-              <label class="filter-label">Buscar por nombre o carnet</label>
+              <label class="filter-label" data-i18n="filter_lbl_search">Buscar por nombre o carnet</label>
               <div class="search-box-redesigned">
                 <i data-lucide="search"></i>
                 <input type="text" id="search-students" data-i18n-placeholder="placeholder_search" placeholder="Buscar por nombre, carnet, materia o docente...">
@@ -171,39 +171,39 @@
 
             <!-- Asignatura / Materia -->
             <div class="filter-group-item">
-              <label class="filter-label">Asignatura / Materia</label>
+              <label class="filter-label" data-i18n="filter_lbl_subject">Asignatura / Materia</label>
               <select class="filter-select" id="filter-materia">
-                <option value="all">Todas las materias</option>
+                <option value="all" data-i18n="filter_opt_all_subjects">Todas las materias</option>
                 <!-- Populate dinámicamente -->
               </select>
             </div>
 
             <!-- Docente -->
             <div class="filter-group-item">
-              <label class="filter-label">Docente</label>
+              <label class="filter-label" data-i18n="filter_lbl_teacher">Docente</label>
               <select class="filter-select" id="filter-docente">
-                <option value="all">Todos los docentes</option>
+                <option value="all" data-i18n="filter_opt_all_teachers">Todos los docentes</option>
                 <!-- Populate dinámicamente -->
               </select>
             </div>
 
             <!-- Código de Carrera -->
             <div class="filter-group-item">
-              <label class="filter-label">Código de Carrera</label>
+              <label class="filter-label" data-i18n="filter_lbl_career">Código de Carrera</label>
               <select class="filter-select" id="filter-carrera">
-                <option value="all">Todas las carreras</option>
+                <option value="all" data-i18n="filter_opt_all_careers">Todas las carreras</option>
                 <!-- Populate dinámicamente -->
               </select>
             </div>
 
             <!-- Nivel de riesgo -->
             <div class="filter-group-item">
-              <label class="filter-label">Nivel de riesgo</label>
+              <label class="filter-label" data-i18n="filter_lbl_risk">Nivel de riesgo</label>
               <select class="filter-select" id="filter-risk">
-                <option value="all">Todos</option>
-                <option value="high">Riesgo Alto (Reprobado)</option>
-                <option value="medium">Riesgo Medio (Alerta Promedio)</option>
-                <option value="low">Riesgo Bajo (Seguro)</option>
+                <option value="all" data-i18n="filter_opt_all_risks">Todos</option>
+                <option value="high" data-i18n="filter_opt_risk_high">Riesgo Alto (Reprobado)</option>
+                <option value="medium" data-i18n="filter_opt_risk_medium">Riesgo Medio (Alerta Promedio)</option>
+                <option value="low" data-i18n="filter_opt_risk_low">Riesgo Bajo (Seguro)</option>
               </select>
             </div>
           </div>
@@ -217,7 +217,7 @@
               0 estudiantes encontrados
             </div>
             <button id="btn-clear-filters">
-              <i data-lucide="filter-x" style="width: 14px; height: 14px;"></i> Limpiar Filtros
+              <i data-lucide="filter-x" style="width: 14px; height: 14px;"></i> <span data-i18n="btn_clear_filters">Limpiar Filtros</span>
             </button>
           </div>
         </div>
