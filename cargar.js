@@ -13,12 +13,6 @@ const state = {
   }
 };
 
-const REQUIRED_COLUMNS = [
-  "Docente", "Materia", "Grupo", "Carnet", "Apellidos", "Nombres", "Código Carrera",
-  "Lab #1", "Par #1", "Lab #2", "Par #2", "Lab #3", "Par #3", "Lab #4", "Par #4",
-  "Prom Lab", "Prom Par", "Nota Final"
-];
-
 // Inicialización de la página
 document.addEventListener("DOMContentLoaded", () => {
   // Inicializar Iconos Lucide
@@ -164,7 +158,11 @@ function setupEventListeners() {
 
   // Botón Descargar Plantilla CSV
   const btnTemplate = document.getElementById("btn-download-template");
-  if (btnTemplate) btnTemplate.addEventListener("click", downloadTemplateCSV);
+  if (btnTemplate) btnTemplate.addEventListener("click", window.downloadTemplateCSV);
+
+  // Botón Reiniciar Fechas del Calendario
+  const btnResetCalendar = document.getElementById("btn-reset-calendar");
+  if (btnResetCalendar) btnResetCalendar.addEventListener("click", resetCalendarDates);
 
   // Botón Limpiar Base de Datos
   const btnClearDb = document.getElementById("btn-clear-database");
@@ -174,58 +172,60 @@ function setupEventListeners() {
   const btnCreatePeriod = document.getElementById("btn-create-period");
   if (btnCreatePeriod) {
     btnCreatePeriod.addEventListener("click", () => {
-      const name = prompt(t("prompt_create_cycle"));
-      if (!name) return;
-      const cleanName = name.trim();
-      if (!cleanName) return;
+      showInputModal(t("prompt_title_create_cycle"), t("prompt_create_cycle"), "Ciclo 2 - 2026", t("btn_create_cycle"))
+        .then(name => {
+          if (!name) return;
+          const cleanName = name.trim();
+          if (!cleanName) return;
 
-      const config = getPeriodsConfig();
-      if (config[cleanName]) {
-        alert(t("err_cycle_exists", { name: cleanName }));
-        return;
-      }
+          const config = getPeriodsConfig();
+          if (config[cleanName]) {
+            alert(t("err_cycle_exists", { name: cleanName }));
+            return;
+          }
 
-      // Crear nuevo periodo con fechas por defecto basadas en el año digitado (si se deduce del nombre)
-      let year = new Date().getFullYear();
-      const match = cleanName.match(/\b(20\d{2})\b/);
-      if (match) {
-        year = parseInt(match[1]);
-      }
-      
-      const isCiclo2 = cleanName.toLowerCase().includes("ciclo 2") || cleanName.toLowerCase().includes("ciclo ii") || cleanName.toLowerCase().includes("c2");
-      
-      config[cleanName] = {
-        status: "active",
-        cycleStart: isCiclo2 ? `${year}-07-20` : `${year}-02-01`,
-        cycleEnd: isCiclo2 ? `${year}-12-15` : `${year}-06-30`,
-        unit1End: isCiclo2 ? `${year}-08-25` : `${year}-03-05`,
-        unit2End: isCiclo2 ? `${year}-09-30` : `${year}-04-10`,
-        unit3End: isCiclo2 ? `${year}-11-05` : `${year}-05-15`,
-        unit4End: isCiclo2 ? `${year}-12-10` : `${year}-06-20`,
-        simulationDate: ""
-      };
+          // Crear nuevo periodo con fechas por defecto basadas en el año digitado (si se deduce del nombre)
+          let year = new Date().getFullYear();
+          const match = cleanName.match(/\b(20\d{2})\b/);
+          if (match) {
+            year = parseInt(match[1]);
+          }
+          
+          const isCiclo2 = cleanName.toLowerCase().includes("ciclo 2") || cleanName.toLowerCase().includes("ciclo ii") || cleanName.toLowerCase().includes("c2");
+          
+          config[cleanName] = {
+            status: "active",
+            cycleStart: isCiclo2 ? `${year}-07-20` : `${year}-02-01`,
+            cycleEnd: isCiclo2 ? `${year}-12-15` : `${year}-06-30`,
+            unit1End: isCiclo2 ? `${year}-08-25` : `${year}-03-05`,
+            unit2End: isCiclo2 ? `${year}-09-30` : `${year}-04-10`,
+            unit3End: isCiclo2 ? `${year}-11-05` : `${year}-05-15`,
+            unit4End: isCiclo2 ? `${year}-12-10` : `${year}-06-20`,
+            simulationDate: ""
+          };
 
-      savePeriodsConfig(config);
-      
-      // Actualizar selectores
-      initGlobalPeriodSelector((newPeriod) => {
-        loadCalendarSettingsToForm(newPeriod);
-        updateDatabaseStatusUI();
-      });
-      updateImportPeriodSelect();
+          savePeriodsConfig(config);
+          
+          // Actualizar selectores
+          initGlobalPeriodSelector((newPeriod) => {
+            loadCalendarSettingsToForm(newPeriod);
+            updateDatabaseStatusUI();
+          });
+          updateImportPeriodSelect();
 
-      // Autoseleccionar en los dropdowns
-      const globalSelect = document.getElementById("global-period-select");
-      if (globalSelect) {
-        globalSelect.value = cleanName;
-        globalSelect.dispatchEvent(new Event("change"));
-      }
-      const importSelect = document.getElementById("import-period-select");
-      if (importSelect) {
-        importSelect.value = cleanName;
-      }
+          // Autoseleccionar en los dropdowns
+          const globalSelect = document.getElementById("global-period-select");
+          if (globalSelect) {
+            globalSelect.value = cleanName;
+            globalSelect.dispatchEvent(new Event("change"));
+          }
+          const importSelect = document.getElementById("import-period-select");
+          if (importSelect) {
+            importSelect.value = cleanName;
+          }
 
-      alert(t("msg_cycle_created", { name: cleanName }));
+          alert(t("msg_cycle_created", { name: cleanName }));
+        });
     });
   }
 
@@ -776,8 +776,54 @@ function clearDatabase() {
       if (confirmed) {
         state.students = [];
         localStorage.removeItem("atenas_students");
+        localStorage.removeItem("atenas_periods_config");
+        localStorage.removeItem("atenas_active_period");
+        
+        // Reinicializar selectores y cargar datos por defecto
+        initPeriodSelectors();
+        const active = getActivePeriod();
+        loadCalendarSettingsToForm(active);
         updateDatabaseStatusUI();
         alert(t("msg_db_cleared"));
+      }
+    });
+}
+
+// Reiniciar fechas del ciclo activo a sus valores por defecto
+function resetCalendarDates() {
+  const activePeriod = getActivePeriod();
+  showConfirmModal(t("confirm_title_reset_calendar"), t("confirm_reset_calendar"), "warning")
+    .then(confirmed => {
+      if (confirmed) {
+        const config = getPeriodsConfig();
+        
+        // Determinar valores por defecto
+        let year = new Date().getFullYear();
+        const match = activePeriod.match(/\b(20\d{2})\b/);
+        if (match) {
+          year = parseInt(match[1]);
+        }
+        const isCiclo2 = activePeriod.toLowerCase().includes("ciclo 2") || activePeriod.toLowerCase().includes("ciclo ii") || activePeriod.toLowerCase().includes("c2");
+        
+        if (DEFAULT_PERIODS_CONFIG[activePeriod]) {
+          config[activePeriod] = JSON.parse(JSON.stringify(DEFAULT_PERIODS_CONFIG[activePeriod]));
+        } else {
+          config[activePeriod] = {
+            status: "active",
+            cycleStart: isCiclo2 ? `${year}-07-20` : `${year}-02-01`,
+            cycleEnd: isCiclo2 ? `${year}-12-15` : `${year}-06-30`,
+            unit1End: isCiclo2 ? `${year}-08-25` : `${year}-03-05`,
+            unit2End: isCiclo2 ? `${year}-09-30` : `${year}-04-10`,
+            unit3End: isCiclo2 ? `${year}-11-05` : `${year}-05-15`,
+            unit4End: isCiclo2 ? `${year}-12-10` : `${year}-06-20`,
+            simulationDate: ""
+          };
+        }
+        
+        savePeriodsConfig(config);
+        loadCalendarSettingsToForm(activePeriod);
+        updateDatabaseStatusUI();
+        alert(t("msg_calendar_reset"));
       }
     });
 }
@@ -1039,24 +1085,6 @@ function loadDemoData() {
   }, 600);
 }
 
-// DESCARGAR PLANTILLA CSV DE MUESTRA
-function downloadTemplateCSV() {
-  const headers = REQUIRED_COLUMNS.join(";");
-  const rows = [
-    "Ing. Carlos Benítez;Programación Orientada a Objetos;01;2024-0001;González Pérez;Mateo;ING01;7.5;8.0;6.8;7.2;8.0;7.5;9.0;8.5;7.825;7.800;7.81",
-    "Dra. Elena Rostova;Estructura de Datos;02;2024-0002;Rodríguez Gómez;Sofía;ING01;5.5;6.0;6.2;5.5;5.0;6.2;5.8;4.8;5.625;5.625;5.63",
-    "Dr. Jorge Valdivia;Álgebra Vectorial;01;2024-0003;Gómez Fernández;Lucas;ING02;6.8;6.2;6.5;6.8;6.0;6.1;7.0;6.5;6.575;6.400;6.47"
-  ];
-  const csvContent = headers + "\n" + rows.join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "plantilla_estudiantes.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
 
 // CONTROL DE TEMA CLARO / OSCURO
 function setupThemeToggle() {

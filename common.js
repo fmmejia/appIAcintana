@@ -632,3 +632,140 @@ window.showConfirmModal = function(title, text, type = 'warning', confirmBtnText
   });
 };
 
+// Modal de Entrada de Texto Estilizado Premium (Reemplazo de prompt())
+window.showInputModal = function(title, text, placeholder = '', confirmBtnText = '', cancelBtnText = '') {
+  return new Promise((resolve) => {
+    // Asegurarnos de remover cualquier modal previo si existiera
+    const activeOverlays = document.querySelectorAll(".confirm-modal-overlay");
+    activeOverlays.forEach(el => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
+
+    // Crear overlay
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-modal-overlay";
+    
+    // Icono animado de escritura (estilo info)
+    let iconHTML = `
+      <div class="confirm-icon confirm-icon-info">
+        <span>+</span>
+      </div>
+    `;
+    
+    const finalConfirmText = confirmBtnText || (t("modal_confirm_yes") !== "modal_confirm_yes" ? t("modal_confirm_yes") : "Aceptar");
+    const finalCancelText = cancelBtnText || (t("modal_confirm_cancel") !== "modal_confirm_cancel" ? t("modal_confirm_cancel") : "Cancelar");
+
+    overlay.innerHTML = `
+      <div class="confirm-modal-card type-info">
+        <div class="confirm-modal-icon-wrapper">
+          ${iconHTML}
+        </div>
+        <h3 class="confirm-modal-title">${title}</h3>
+        <p class="confirm-modal-text">${text}</p>
+        <div class="confirm-modal-input-wrapper" style="width: 100%; margin-bottom: 20px;">
+          <input type="text" id="confirm-modal-text-input" placeholder="${placeholder}" style="width: 100%; height: 40px; background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-main); padding: 0 12px; font-family: inherit; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: var(--transition-smooth); text-align: center;">
+        </div>
+        <div class="confirm-modal-actions">
+          <button class="confirm-btn confirm-btn-cancel">${finalCancelText}</button>
+          <button class="confirm-btn confirm-btn-confirm">${finalConfirmText}</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    const textInput = overlay.querySelector("#confirm-modal-text-input");
+    
+    // Forzar reflow para animación
+    overlay.offsetHeight; 
+    overlay.classList.add("active");
+    
+    if (textInput) {
+      // Estilo de foco hermoso
+      textInput.addEventListener("focus", () => {
+        textInput.style.borderColor = "var(--color-primary)";
+        textInput.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
+      });
+      textInput.addEventListener("blur", () => {
+        textInput.style.borderColor = "var(--glass-border)";
+        textInput.style.boxShadow = "none";
+      });
+      
+      setTimeout(() => textInput.focus(), 150);
+    }
+    
+    const confirmBtn = overlay.querySelector(".confirm-btn-confirm");
+    const cancelBtn = overlay.querySelector(".confirm-btn-cancel");
+    
+    let resolved = false;
+
+    const closeWithResult = (result) => {
+      if (resolved) return;
+      resolved = true;
+
+      overlay.classList.remove("active");
+      
+      const transitionEndHandler = () => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+        resolve(result);
+      };
+
+      overlay.addEventListener("transitionend", transitionEndHandler);
+      
+      // Fallback
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+        resolve(result);
+      }, 350);
+    };
+    
+    confirmBtn.addEventListener("click", () => {
+      const val = textInput ? textInput.value : "";
+      closeWithResult(val);
+    });
+    
+    cancelBtn.addEventListener("click", () => closeWithResult(null));
+    
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        closeWithResult(null);
+      }
+    });
+
+    const handleKeydown = (e) => {
+      if (e.key === "Escape") {
+        closeWithResult(null);
+        document.removeEventListener("keydown", handleKeydown);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const val = textInput ? textInput.value : "";
+        closeWithResult(val);
+        document.removeEventListener("keydown", handleKeydown);
+      }
+    };
+    document.addEventListener("keydown", handleKeydown);
+  });
+};
+
+// Plantilla CSV global
+const CSV_TEMPLATE_CONTENT = `Docente,Materia,Carnet,Nombre,Lab 1,Lab 2,Lab 3,Parcial 1,Parcial 2,Asistencias,Observaciones\nDocente Ejemplo,Materia Ejemplo,AB12345,Estudiante Ejemplo,8.5,9.0,7.5,8.0,6.5,95%,Excelente alumno`;
+
+// Función global de descarga de plantilla CSV
+window.downloadTemplateCSV = function() {
+  const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "plantilla_estudiantes.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 100);
+};
+

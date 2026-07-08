@@ -25,13 +25,6 @@ const state = {
   }
 };
 
-// Columnas Requeridas en el CSV/Excel
-const REQUIRED_COLUMNS = [
-  "Docente", "Materia", "Grupo", "Carnet", "Apellidos", "Nombres", "Código Carrera",
-  "Lab #1", "Par #1", "Lab #2", "Par #2", "Lab #3", "Par #3", "Lab #4", "Par #4",
-  "Prom Lab", "Prom Par", "Nota Final"
-];
-
 // Nombres de Carreras Mapeadas
 const CAREER_NAMES = {
   "010306": "Arquitectura. Presencial.",
@@ -1729,25 +1722,6 @@ function loadDemoData() {
     
     alert("Datos de demostración cargados exitosamente (" + state.students.length + " estudiantes únicos inscritos en múltiples materias).");
   }, 600);
-}
-
-// Descargar plantilla
-function downloadTemplateCSV() {
-  const headers = REQUIRED_COLUMNS.join(";");
-  const rows = [
-    "Ing. Carlos Benítez;Programación Orientada a Objetos;01;2024-0001;González Pérez;Mateo;ING01;7.5;8.0;6.8;7.2;8.0;7.5;9.0;8.5;7.825;7.8;7.81",
-    "Dra. Elena Rostova;Estructura de Datos;02;2024-0002;Rodríguez Gómez;Sofía;ING01;5.5;6.0;6.2;5.5;5.0;6.2;5.8;4.8;5.375;5.625;5.5",
-    "Dr. Jorge Valdivia;Álgebra Vectorial;01;2024-0003;Gómez Fernández;Lucas;ING02;6.8;6.2;6.5;6.8;6.0;6.1;7.0;6.5;6.575;6.4;6.49"
-  ];
-  const csvContent = headers + "\n" + rows.join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "plantilla_estudiantes.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 // CONTROL DE TEMA CLARO / OSCURO
