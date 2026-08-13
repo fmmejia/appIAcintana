@@ -95,6 +95,7 @@ const TRANSLATIONS = {
     modal_diagnostic_title: "Diagnóstico General",
     modal_recommendations_title: "Plan de Acompañamiento Sugerido",
     modal_print_btn: "Imprimir Ficha",
+    modal_download_pdf_btn: "Descargar Ficha (PDF)",
     modal_close_btn: "Cerrar",
 
     // Listado General de Estudiantes
@@ -472,6 +473,7 @@ const TRANSLATIONS = {
     modal_diagnostic_title: "General Diagnosis",
     modal_recommendations_title: "Suggested Support Plan",
     modal_print_btn: "Print Profile",
+    modal_download_pdf_btn: "Download Profile (PDF)",
     modal_close_btn: "Close",
 
     // Listado General de Estudiantes

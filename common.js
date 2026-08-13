@@ -769,3 +769,344 @@ window.downloadTemplateCSV = function() {
   }, 100);
 };
 
+// ==========================================================================
+// SISTEMA DE EXPORTACIÓN A PDF (FICHA ACADÉMICA DEL ESTUDIANTE)
+// ==========================================================================
+
+// Carga dinámica de html2pdf.js si no está presente
+function ensureHtml2PdfLoaded(callback) {
+  if (window.html2pdf) {
+    if (callback) callback();
+    return;
+  }
+  const script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+  script.onload = () => {
+    if (callback) callback();
+  };
+  document.head.appendChild(script);
+}
+
+// Inyección dinámica de la plantilla de impresión y botón de descarga
+document.addEventListener("DOMContentLoaded", () => {
+  // 1. Inyectar botón de descarga al modal al abrirse/cargarse si existe el botón de cerrar
+  const btnClose = document.getElementById("btn-close-modal");
+  if (btnClose && !document.getElementById("btn-download-pdf")) {
+    const parent = btnClose.parentNode;
+    
+    // Contenedor flex para agrupar botones
+    const btnContainer = document.createElement("div");
+    btnContainer.style.display = "flex";
+    btnContainer.style.gap = "8px";
+    
+    // Botón Descargar PDF
+    const btnDownload = document.createElement("button");
+    btnDownload.className = "btn-demo";
+    btnDownload.id = "btn-download-pdf";
+    btnDownload.style.background = "var(--color-primary)";
+    btnDownload.style.border = "1px solid var(--color-primary)";
+    btnDownload.style.color = "white";
+    btnDownload.style.padding = "6px 12px";
+    btnDownload.style.fontSize = "0.78rem";
+    btnDownload.style.display = "flex";
+    btnDownload.style.alignItems = "center";
+    btnDownload.style.gap = "6px";
+    btnDownload.style.cursor = "pointer";
+    btnDownload.style.fontWeight = "600";
+    btnDownload.style.borderRadius = "var(--radius-sm)";
+    
+    // Traducir dinámicamente con t() si está disponible, o usar fallback
+    const btnLabel = typeof t !== "undefined" ? t("modal_download_pdf_btn") : "Descargar Ficha (PDF)";
+    btnDownload.innerHTML = `<i data-lucide="download"></i> <span data-i18n="modal_download_pdf_btn">${btnLabel}</span>`;
+    
+    // Insertar contenedor
+    parent.replaceChild(btnContainer, btnClose);
+    btnContainer.appendChild(btnDownload);
+    btnContainer.appendChild(btnClose);
+    
+    // Refrescar iconos lucide
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  }
+
+  // 2. Inyectar la plantilla HTML oculta para renderizado de PDF
+  if (!document.getElementById("pdf-report-template")) {
+    const pdfContainer = document.createElement("div");
+    pdfContainer.style.position = "absolute";
+    pdfContainer.style.left = "-9999px";
+    pdfContainer.style.top = "-9999px";
+    
+    pdfContainer.innerHTML = `
+      <style>
+        #pdf-report-template .risk-badge-print {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+        #pdf-report-template .risk-high {
+          background-color: #fee2e2;
+          color: #b91c1c;
+          border: 1px solid #fca5a5;
+        }
+        #pdf-report-template .risk-medium {
+          background-color: #fef3c7;
+          color: #b45309;
+          border: 1px solid #fde68a;
+        }
+        #pdf-report-template .risk-low {
+          background-color: #d1fae5;
+          color: #047857;
+          border: 1px solid #6ee7b7;
+        }
+        #pdf-report-template .text-center {
+          text-align: center !important;
+        }
+      </style>
+      <div id="pdf-report-template" style="width: 800px; background: #ffffff; color: #0f172a; padding: 24px 30px; font-family: 'Jost', 'Inter', sans-serif; box-sizing: border-box; position: relative;">
+        <!-- Encabezado membretado del reporte -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; background: #1565c0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;">
+              <i data-lucide="graduation-cap" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div>
+              <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">UNIVERSIDAD FRANCISCO GAVIDIA</h2>
+              <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Dirección de Permanencia Estudiantil</span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #0f172a;">FICHA ACADÉMICA INDIVIDUAL</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.75rem; color: #64748b; font-weight: 500;">Sistema Atenas - Reporte de Permanencia</p>
+          </div>
+        </div>
+
+        <!-- Meta Grid: Información del Estudiante -->
+        <div style="display: flex; flex-wrap: wrap; gap: 10px 20px; margin-bottom: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+          <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">
+            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Nombre Completo</strong>
+            <span id="pdf-p-name" style="font-weight: 600; color: #0f172a; font-size: 0.9rem;">-</span>
+          </div>
+          <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">
+            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Carnet de Estudiante</strong>
+            <span id="pdf-p-carnet" style="font-weight: 600; color: #0f172a; font-size: 0.9rem; font-family: monospace;">-</span>
+          </div>
+          <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">
+            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Carrera Universitaria</strong>
+            <span id="pdf-p-career" style="font-weight: 600; color: #0f172a; font-size: 0.9rem;">-</span>
+          </div>
+          <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">
+            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Ciclo Académico Activo</strong>
+            <span id="pdf-p-period" style="font-weight: 600; color: #0f172a; font-size: 0.9rem;">-</span>
+          </div>
+          <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">
+            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Promedio General (CUM)</strong>
+            <span id="pdf-p-cum" style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">0.00</span>
+          </div>
+          <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">
+            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Estado de Alerta de Deserción</strong>
+            <div>
+              <span id="pdf-p-risk-badge" class="risk-badge-print">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historial / Desglose de Notas -->
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px;">
+          <i data-lucide="table" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+          Desglose de Calificaciones por Materias
+        </h4>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 0.82rem;">
+          <thead>
+            <tr>
+              <th style="background: #f1f5f9; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; padding: 6px 12px; border-bottom: 2px solid #cbd5e1; text-align: left;">Asignatura</th>
+              <th class="text-center" style="width: 100px; background: #f1f5f9; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; padding: 6px 12px; border-bottom: 2px solid #cbd5e1; text-align: center;">Lab. Prom (40%)</th>
+              <th class="text-center" style="width: 100px; background: #f1f5f9; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; padding: 6px 12px; border-bottom: 2px solid #cbd5e1; text-align: center;">Parc. Prom (60%)</th>
+              <th class="text-center" style="width: 100px; background: #f1f5f9; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; padding: 6px 12px; border-bottom: 2px solid #cbd5e1; text-align: center;">Nota Final</th>
+              <th style="width: 120px; background: #f1f5f9; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; padding: 6px 12px; border-bottom: 2px solid #cbd5e1; text-align: left;">Estado de Alerta</th>
+            </tr>
+          </thead>
+          <tbody id="pdf-p-table-body">
+            <!-- Calificaciones dinámicas -->
+          </tbody>
+        </table>
+
+        <!-- Diagnóstico Analítico -->
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px;">
+          <i data-lucide="activity" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+          Diagnóstico y Alertas Críticas
+        </h4>
+        <div id="pdf-p-diagnostic" style="border: 1px solid #e2e8f0; border-left: 4px solid #1565c0; background: #f8fafc; border-radius: 6px; padding: 10px 12px; font-size: 0.82rem; line-height: 1.5; color: #334155; margin-bottom: 16px;">
+          -
+        </div>
+
+        <!-- Plan de Acompañamiento -->
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px;">
+          <i data-lucide="clipboard-list" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+          Recomendaciones y Plan de Acompañamiento
+        </h4>
+        <ul id="pdf-p-recommendations" style="margin: 0; padding-left: 20px; font-size: 0.8rem; color: #475569; line-height: 1.6;">
+          <!-- Recomendaciones dinámicas -->
+        </ul>
+
+        <!-- Firma de Reporte -->
+        <div style="margin-top: 55px; display: flex; justify-content: space-between; gap: 40px; text-align: center; font-size: 0.75rem; color: #64748b;">
+          <div style="flex: 1;">
+            <div style="border-top: 1px solid #cbd5e1; padding-top: 8px; margin-top: 35px;">Firma del Consejero / Tutor</div>
+          </div>
+          <div style="flex: 1;">
+            <div style="border-top: 1px solid #cbd5e1; padding-top: 8px; margin-top: 35px;">Firma del Estudiante</div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(pdfContainer);
+  }
+});
+
+// Manejador del clic del botón de descarga utilizando delegación de eventos
+document.addEventListener("click", (e) => {
+  if (e.target && (e.target.id === "btn-download-pdf" || e.target.closest("#btn-download-pdf"))) {
+    ensureHtml2PdfLoaded(() => {
+      exportStudentPDF();
+    });
+  }
+});
+
+// Rellenado dinámico de la plantilla PDF con la información cargada en el modal activo
+function populatePDFTemplate(student) {
+  document.getElementById("pdf-p-name").textContent = `${student.apellidos}, ${student.nombres}`;
+  document.getElementById("pdf-p-carnet").textContent = student.carnet;
+  
+  const careerName = (typeof CAREER_NAMES !== "undefined" && CAREER_NAMES[student.carrera]) || student.carrera;
+  document.getElementById("pdf-p-career").textContent = careerName;
+  document.getElementById("pdf-p-period").textContent = student.periodo;
+  document.getElementById("pdf-p-cum").textContent = student.calculatedFinal.toFixed(2);
+  
+  const badge = document.getElementById("pdf-p-risk-badge");
+  let riskClass = "risk-low";
+  let riskText = typeof t !== "undefined" ? t("risk_low") : "Riesgo Bajo";
+  
+  if (student.riskLevel === "high") {
+    riskClass = "risk-high";
+    riskText = typeof t !== "undefined" ? t("risk_high") : "Riesgo Alto";
+  } else if (student.riskLevel === "medium") {
+    riskClass = "risk-medium";
+    riskText = typeof t !== "undefined" ? t("risk_medium") : "Riesgo Medio";
+  }
+  
+  badge.className = `risk-badge-print ${riskClass}`;
+  badge.textContent = riskText;
+  
+  // Tabla de calificaciones
+  const tbody = document.getElementById("pdf-p-table-body");
+  tbody.innerHTML = "";
+  
+  const thresholdFail = (typeof state !== "undefined" && state.config && state.config.thresholdFail) || 6.0;
+  const thresholdCum = (typeof state !== "undefined" && state.config && state.config.thresholdCum) || 7.0;
+
+  student.subjects.forEach(subj => {
+    let alertClass = "risk-low";
+    let alertText = typeof t !== "undefined" ? t("status_passed") : "Aprobado";
+    
+    if (subj.calculatedFinal < thresholdFail) {
+      alertClass = "risk-high";
+      alertText = typeof t !== "undefined" ? t("status_failed") : "Reprobado";
+    } else if (subj.calculatedFinal < thresholdCum) {
+      alertClass = "risk-medium";
+      alertText = typeof t !== "undefined" ? (t("status_passed") + " (Alerta)") : "Aprobado (Alerta)";
+    }
+    
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight: 700; border-bottom: 1px solid #e2e8f0; padding: 6px 12px; color: #334155;">${subj.materia}</td>
+        <td class="text-center" style="font-family: monospace; border-bottom: 1px solid #e2e8f0; padding: 6px 12px; color: #334155;">${subj.calculatedPromLab.toFixed(2)}</td>
+        <td class="text-center" style="font-family: monospace; border-bottom: 1px solid #e2e8f0; padding: 6px 12px; color: #334155;">${subj.calculatedPromPar.toFixed(2)}</td>
+        <td class="text-center" style="font-family: monospace; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding: 6px 12px; color: #334155;">${subj.calculatedFinal.toFixed(2)}</td>
+        <td style="border-bottom: 1px solid #e2e8f0; padding: 6px 12px;"><span class="risk-badge-print ${alertClass}">${alertText}</span></td>
+      </tr>
+    `;
+  });
+  
+  // Diagnóstico
+  const screenDiagDesc = document.getElementById("modal-diagnostic-desc");
+  const screenDiagTitle = document.getElementById("modal-diagnostic-title");
+  const pdfDiag = document.getElementById("pdf-p-diagnostic");
+  
+  if (screenDiagDesc && pdfDiag) {
+    const title = screenDiagTitle ? screenDiagTitle.textContent : "Diagnóstico";
+    pdfDiag.textContent = `${title}: ${screenDiagDesc.textContent}`;
+  } else if (pdfDiag) {
+    pdfDiag.textContent = student.riskLevel === "high" 
+      ? "Estudiante en Riesgo Alto por materias reprobadas." 
+      : "Rendimiento académico regular.";
+  }
+  
+  if (pdfDiag) {
+    if (student.riskLevel === "high") {
+      pdfDiag.style.borderLeft = "4px solid #ef4444";
+    } else if (student.riskLevel === "medium") {
+      pdfDiag.style.borderLeft = "4px solid #f59e0b";
+    } else {
+      pdfDiag.style.borderLeft = "4px solid #10b981";
+    }
+  }
+
+  // Recomendaciones del Plan de Acompañamiento
+  const screenRecs = document.querySelectorAll("#modal-recommendations-container .rec-item p");
+  const pdfRecList = document.getElementById("pdf-p-recommendations");
+  
+  if (pdfRecList) {
+    pdfRecList.innerHTML = "";
+    if (screenRecs && screenRecs.length > 0) {
+      screenRecs.forEach(p => {
+        pdfRecList.innerHTML += `<li style="margin-bottom: 3px;">${p.textContent}</li>`;
+      });
+    } else {
+      if (student.riskLevel === "high") {
+        pdfRecList.innerHTML = `<li style="margin-bottom: 3px;">Asignar tutorías académicas obligatorias.</li><li style="margin-bottom: 3px;">Monitoreo preventivo semanal.</li>`;
+      } else {
+        pdfRecList.innerHTML = `<li style="margin-bottom: 3px;">Mantener seguimiento académico de rutina.</li>`;
+      }
+    }
+  }
+  
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
+// Exportación del PDF a través del renderizado de canvas y compilación del documento Carta
+function exportStudentPDF() {
+  const currentStudent = typeof state !== "undefined" ? state.selectedStudent : null;
+  if (!currentStudent) return;
+  
+  populatePDFTemplate(currentStudent);
+  
+  const element = document.getElementById('pdf-report-template');
+  const filename = `Ficha_Academica_${currentStudent.carnet}.pdf`;
+
+  const opt = {
+    margin:       [0.15, 0.4, 0.15, 0.4],
+    filename:     filename,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      letterRendering: true,
+      scrollY: 0,
+      scrollX: 0
+    },
+    jsPDF:        { 
+      unit: 'in', 
+      format: 'letter', 
+      orientation: 'portrait' 
+    }
+  };
+
+  html2pdf().set(opt).from(element).save();
+}
+
