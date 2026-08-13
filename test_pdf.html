@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prototipo: Exportar Ficha Estudiante a PDF</title>
+  
+  <!-- Fuente Jost para la estética UFG -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+  
+  <!-- Iconos Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- html2pdf.js CDN (Librería unificada para convertir HTML a PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1565c0;      /* Azul UFG */
+      --primary-dark: #0d47a1;
+      --accent: #f59e0b;       /* Dorado UFG */
+      --bg-dark: #0a0d16;
+      --bg-card: #111827;
+      --border-color: #1f2937;
+      --text-muted: #9ca3af;
+      --text-main: #f3f4f6;
+    }
+
+    body {
+      font-family: 'Jost', 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    header p {
+      margin: 8px 0 0 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Selector de estudiantes de prueba */
+    .controls {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .selector-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    select {
+      background: var(--bg-dark);
+      color: #fff;
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-download {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .btn-download:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-download:active {
+      transform: scale(0.98);
+    }
+
+    /* Área del documento - Estilo Hoja de Papel A4/Carta Blanca */
+    .preview-box {
+      width: 100%;
+      background: #334155;
+      padding: 30px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* Plantilla imprimible en blanco (Estilo formal) */
+    .printable-sheet {
+      width: 100%;
+      max-width: 800px;
+      background: #ffffff;
+      color: #0f172a; /* Texto oscuro para reporte formal */
+      padding: 24px 30px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    /* Logotipo institucional simulado */
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-square {
+      width: 44px;
+      height: 44px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .logo-text-ufg h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+    }
+
+    .logo-text-ufg span {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .report-title-area {
+      text-align: right;
+    }
+
+    .report-title-area h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .report-title-area p {
+      margin: 4px 0 0 0;
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* Información General del Estudiante - Modificado a Flexbox para soporte html2canvas */
+    .student-meta-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      margin-bottom: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+
+    .meta-item {
+      flex: 1 1 calc(50% - 10px);
+      min-width: 200px;
+      font-size: 0.82rem;
+    }
+
+    .meta-item strong {
+      color: #475569;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .meta-item span {
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 0.9rem;
+    }
+
+    /* Estado de riesgo impreso en la cabecera */
+    .risk-badge-print {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .risk-high {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+    .risk-medium {
+      background-color: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .risk-low {
+      background-color: #d1fae5;
+      color: #047857;
+      border: 1px solid #6ee7b7;
+    }
+
+    /* Tabla de Asignaturas Impresa */
+    .subjects-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 0.82rem;
+    }
+
+    .subjects-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+      padding: 6px 12px;
+      border-bottom: 2px solid #cbd5e1;
+      text-align: left;
+    }
+
+    .subjects-table td {
+      padding: 6px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    .subjects-table tr:last-child td {
+      border-bottom: 2px solid #cbd5e1;
+    }
+
+    .text-center {
+      text-align: center !important;
+    }
+
+    .font-bold {
+      font-weight: 700;
+    }
+
+    .font-mono {
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+
+    /* Diagnóstico y alertas recomendadas */
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 6px 0;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .diagnostic-box {
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid var(--primary);
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #334155;
+      margin-bottom: 16px;
+    }
+
+    .recommendations-list {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 0.8rem;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .recommendations-list li {
+      margin-bottom: 3px;
+    }
+
+    /* Firma autorizada - Modificado a Flexbox para evitar colapso en html2canvas */
+    .signature-area {
+      margin-top: 55px;
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .signature-area > div {
+      flex: 1;
+    }
+
+    .signature-line {
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      margin-top: 35px;
+    }
+
+    /* Regla del navegador para impresión real en papel */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .controls, .preview-box, header {
+        display: none !important;
+      }
+      .printable-sheet {
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <header>
+      <h1>Prototipo: Exportador de Fichas Académicas</h1>
+      <p>Este prototipo demuestra el funcionamiento del Enfoque 1 (HTML a PDF local con html2pdf.js)</p>
+    </header>
+
+    <!-- Controles interactivos -->
+    <div class="controls">
+      <div class="selector-group">
+        <label for="student-selector">Estudiante Demo:</label>
+        <select id="student-selector" onchange="changeStudentData()">
+          <option value="stu01">Acosta Díaz, Laura Mercedes (2024-0048)</option>
+          <option value="stu02">Benítez Benítez, Nicolás Antonio (2024-0072)</option>
+          <option value="stu03">Herrera Vargas, Andrea Sofía (2024-0044)</option>
+        </select>
+      </div>
+      <button class="btn-download" onclick="generatePDF()">
+        <i data-lucide="download"></i>
+        Exportar Ficha en PDF
+      </button>
+    </div>
+
+    <!-- Caja de Previsualización (Con formato de impresión en fondo blanco) -->
+    <div class="preview-box">
+      
+      <!-- ESTA ES LA PLANTILLA HTML QUE SE CARGARÁ Y EXPORTARÁ EN PDF -->
+      <div class="printable-sheet" id="report-template">
+        
+        <!-- Encabezado membretado del reporte -->
+        <div class="sheet-header">
+          <div class="logo-area">
+            <div class="logo-square">
+              <i data-lucide="graduation-cap" style="width: 24px; height: 24px;"></i>
+            </div>
+            <div class="logo-text-ufg">
+              <h2>UNIVERSIDAD FRANCISCO GAVIDIA</h2>
+              <span>Dirección de Permanencia Estudiantil</span>
+            </div>
+          </div>
+          <div class="report-title-area">
+            <h3>FICHA ACADÉMICA INDIVIDUAL</h3>
+            <p>Sistema Atenas - Reporte de Permanencia</p>
+          </div>
+        </div>
+
+        <!-- Meta Grid: Información del Estudiante -->
+        <div class="student-meta-grid">
+          <div class="meta-item">
+            <strong>Nombre Completo</strong>
+            <span id="p-name">Acosta Díaz, Laura Mercedes</span>
+          </div>
+          <div class="meta-item">
+            <strong>Carnet de Estudiante</strong>
+            <span id="p-carnet">2024-0048</span>
+          </div>
+          <div class="meta-item">
+            <strong>Carrera Universitaria</strong>
+            <span id="p-career">Licenciatura en Ciencias Jurídicas (LIC01)</span>
+          </div>
+          <div class="meta-item">
+            <strong>Ciclo Académico Activo</strong>
+            <span>Ciclo 1 - 2026</span>
+          </div>
+          <div class="meta-item">
+            <strong>Promedio General (CUM)</strong>
+            <span id="p-cum" class="font-bold">4.35</span>
+          </div>
+          <div class="meta-item">
+            <strong>Estado de Alerta de Deserción</strong>
+            <div>
+              <span id="p-risk-badge" class="risk-badge-print risk-high">Riesgo Alto</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historial / Desglose de Notas -->
+        <h4 class="section-title">
+          <i data-lucide="table" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+          Desglose de Calificaciones por Materias
+        </h4>
+        <table class="subjects-table">
+          <thead>
+            <tr>
+              <th>Asignatura</th>
+              <th class="text-center" style="width: 80px;">Lab. Prom (40%)</th>
+              <th class="text-center" style="width: 80px;">Parc. Prom (60%)</th>
+              <th class="text-center" style="width: 80px;">Nota Final</th>
+              <th style="width: 120px;">Estado de Alerta</th>
+            </tr>
+          </thead>
+          <tbody id="p-table-body">
+            <!-- Calificaciones dinámicas -->
+          </tbody>
+        </table>
+
+        <!-- Diagnóstico Analítico -->
+        <h4 class="section-title">
+          <i data-lucide="activity" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+          Diagnóstico y Alertas Críticas
+        </h4>
+        <div class="diagnostic-box" id="p-diagnostic">
+          Estudiante clasificado en Riesgo Alto debido a que registra asignaturas con notas proyectadas inferiores al límite de aprobación (6.0). Requiere seguimiento y plan pedagógico inmediato.
+        </div>
+
+        <!-- Plan de Acompañamiento -->
+        <h4 class="section-title">
+          <i data-lucide="clipboard-list" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+          Recomendaciones y Plan de Acompañamiento
+        </h4>
+        <ul class="recommendations-list" id="p-recommendations">
+          <li>Asignar tutoría académica obligatoria en las asignaturas con nota deficiente.</li>
+          <li>Programar cita con consejería académica y de bienestar estudiantil en un plazo no mayor a 3 días.</li>
+          <li>Realizar monitoreo semanal del rendimiento y asistencia en laboratorios.</li>
+        </ul>
+
+        <!-- Firma de Reporte -->
+        <div class="signature-area">
+          <div>
+            <div class="signature-line">Firma del Consejero / Tutor</div>
+          </div>
+          <div>
+            <div class="signature-line">Firma del Estudiante</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Datos simulados de estudiantes
+    const mockStudents = {
+      stu01: {
+        name: "Acosta Díaz, Laura Mercedes",
+        carnet: "2024-0048",
+        career: "Licenciatura en Ciencias Jurídicas (LIC01)",
+        cum: "4.35",
+        risk: "high",
+        riskLabel: "Riesgo Alto",
+        diagnostic: "Estudiante clasificada en Riesgo Alto debido a que registra asignaturas con notas proyectadas inferiores al límite de aprobación institucional (6.0) y un promedio general inferior al CUM de permanencia. Se sugiere intervención psicopedagógica y tutorías académicas urgentes.",
+        subjects: [
+          { name: "Introducción al Estudio del Derecho", labs: "4.20", exams: "4.45", final: "4.35", alert: "Reprobado", riskClass: "risk-high" },
+          { name: "Sociología General", labs: "5.50", exams: "4.00", final: "4.60", alert: "Reprobado", riskClass: "risk-high" },
+          { name: "Técnicas de Expresión Oral y Escrita", labs: "6.20", exams: "5.80", final: "5.96", alert: "Reprobado (Límite)", riskClass: "risk-high" },
+          { name: "Filosofía del Derecho", labs: "3.50", exams: "2.80", final: "3.08", alert: "Reprobado Crítico", riskClass: "risk-high" }
+        ],
+        recommendations: [
+          "Asignación prioritaria a tutorías académicas para refuerzo de conceptos básicos.",
+          "Seguimiento psicológico por el departamento de bienestar debido a alta tensión.",
+          "Establecer un plan de entregas extraordinarias para laboratorios de Filosofía del Derecho."
+        ]
+      },
+      stu02: {
+        name: "Benítez Benítez, Nicolás Antonio",
+        carnet: "2024-0072",
+        career: "Ingeniería de Sistemas Informáticos (ING01)",
+        cum: "6.28",
+        risk: "medium",
+        riskLabel: "Riesgo Medio",
+        diagnostic: "El estudiante se encuentra en Riesgo Medio (Alerta de Promedio). Mantiene todas las asignaturas aprobadas pero muestra una tendencia descendente y notas en el límite de la aprobación (entre 6.0 y 6.9). Requiere monitoreo para evitar caída en reprobación.",
+        subjects: [
+          { name: "Programación Orientada a Objetos", labs: "6.50", exams: "6.00", final: "6.20", alert: "Riesgo Promedio", riskClass: "risk-medium" },
+          { name: "Cálculo Diferencial e Integral", labs: "6.10", exams: "5.90", final: "5.98", alert: "Reprobado (Límite)", riskClass: "risk-high" },
+          { name: "Física General", labs: "7.00", exams: "6.50", final: "6.70", alert: "Aprobado (Alerta)", riskClass: "risk-medium" },
+          { name: "Álgebra Vectorial", labs: "6.40", exams: "6.10", final: "6.22", alert: "Riesgo Promedio", riskClass: "risk-medium" }
+        ],
+        recommendations: [
+          "Inscripción obligatoria en círculos de estudio de Cálculo Diferencial.",
+          "Monitorear las notas del segundo laboratorio en Programación de manera preventiva.",
+          "Revisión de técnicas de estudio y distribución del tiempo libre académico."
+        ]
+      },
+      stu03: {
+        name: "Herrera Vargas, Andrea Sofía",
+        carnet: "2024-0044",
+        career: "Licenciatura en Mercadeo y Publicidad (LIC03)",
+        cum: "8.45",
+        risk: "low",
+        riskLabel: "Riesgo Bajo",
+        diagnostic: "La estudiante presenta un rendimiento académico sobresaliente (Riesgo Bajo) con todas las materias aprobadas con notas superiores a 8.0. Su índice de deserción proyectado es nulo. Se sugiere mantener el seguimiento de rutina.",
+        subjects: [
+          { name: "Principios de Mercadotecnia", labs: "8.80", exams: "8.50", final: "8.62", alert: "Excelente", riskClass: "risk-low" },
+          { name: "Comportamiento del Consumidor", labs: "8.50", exams: "8.00", final: "8.20", alert: "Aprobado Regular", riskClass: "risk-low" },
+          { name: "Estrategias de Comunicación", labs: "9.00", exams: "8.80", final: "8.88", alert: "Sobresaliente", riskClass: "risk-low" },
+          { name: "Estadística Aplicada a Negocios", labs: "8.20", exams: "8.00", final: "8.08", alert: "Aprobado Regular", riskClass: "risk-low" }
+        ],
+        recommendations: [
+          "Mantener monitoreo estándar del ciclo.",
+          "Postular a la estudiante como candidata para mentorías académicas (tutora par).",
+          "Invitar a participar en proyectos de investigación del departamento."
+        ]
+      }
+    };
+
+    // Función para renderizar los datos del estudiante en la hoja
+    function renderStudent(studentId) {
+      const student = mockStudents[studentId];
+      if (!student) return;
+
+      document.getElementById("p-name").textContent = student.name;
+      document.getElementById("p-carnet").textContent = student.carnet;
+      document.getElementById("p-career").textContent = student.career;
+      document.getElementById("p-cum").textContent = student.cum;
+      
+      const badge = document.getElementById("p-risk-badge");
+      badge.textContent = student.riskLabel;
+      badge.className = `risk-badge-print risk-${student.risk}`;
+
+      document.getElementById("p-diagnostic").textContent = student.diagnostic;
+
+      // Render de tabla de materias
+      const tbody = document.getElementById("p-table-body");
+      tbody.innerHTML = "";
+      student.subjects.forEach(sub => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="font-bold">${sub.name}</td>
+            <td class="text-center font-mono">${sub.labs}</td>
+            <td class="text-center font-mono">${sub.exams}</td>
+            <td class="text-center font-mono font-bold">${sub.final}</td>
+            <td><span class="risk-badge-print ${sub.riskClass}">${sub.alert}</span></td>
+          </tr>
+        `;
+      });
+
+      // Render de recomendaciones
+      const recList = document.getElementById("p-recommendations");
+      recList.innerHTML = "";
+      student.recommendations.forEach(rec => {
+        recList.innerHTML += `<li>${rec}</li>`;
+      });
+
+      // Inicializar iconos lucide cargados dinámicamente
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    }
+
+    // Cambiar datos del estudiante en base a la selección del select
+    function changeStudentData() {
+      const selector = document.getElementById("student-selector");
+      renderStudent(selector.value);
+    }
+
+    // FUNCIÓN CLAVE: Generación del documento PDF localmente
+    function generatePDF() {
+      // Elemento HTML que contiene la plantilla
+      const element = document.getElementById('report-template');
+      
+      // Obtener carnet para nombre de archivo personalizado
+      const selector = document.getElementById("student-selector");
+      const currentStudent = mockStudents[selector.value];
+      const filename = `Ficha_Academica_${currentStudent.carnet}.pdf`;
+
+      // Configuración de html2pdf
+      const opt = {
+        margin:       [0.15, 0.4, 0.15, 0.4], // [arriba, izquierda, abajo, derecha] en pulgadas
+        filename:     filename,               // Nombre de la descarga
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+          scale: 2,                           // Escala del renderizado (2x para excelente resolución)
+          useCORS: true,                      // Habilitar CORS para cargar recursos externos
+          letterRendering: true,              // Mejorar precisión tipográfica
+          scrollY: 0,                         // Evitar espacios en blanco causados por el scroll
+          scrollX: 0
+        },
+        jsPDF:        { 
+          unit: 'in', 
+          format: 'letter',                   // Formato Carta
+          orientation: 'portrait'             // Orientación vertical
+        }
+      };
+
+      // Lanzar generación del PDF
+      html2pdf().set(opt).from(element).save();
+    }
+
+    // Inicializar con la primera opción
+    document.addEventListener("DOMContentLoaded", () => {
+      renderStudent("stu01");
+    });
+  </script>
+</body>
+</html>
