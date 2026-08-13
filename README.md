@@ -8,9 +8,8 @@ La aplicación ha sido dividida en dos páginas web físicas independientes para
 
 1.  **`index.html`**: Página de inicio y resumen estadístico. Contiene la zona de carga de reportes académicos, el panel con los 4 indicadores KPI generales, 3 gráficos interactivos (donas de riesgo, barras de alerta por carrera e histograma de notas) y el panel lateral para calibrar los parámetros del motor de evaluación de riesgos.
 2.  **`estudiantes.html`**: Página exclusiva para el listado de alumnos. Cuenta con la caja de filtros rediseñada en grid (carrera, materia, docente, riesgo), el buscador por nombre/carnet, la tabla de resultados paginada y el modal de ficha técnica con el diagnóstico e impacto en CUM.
-3.  **`styles.css`**: Hoja de estilos unificada, con diseño *dark glassmorphic* responsivo y animaciones.
-4.  **`app.js`**: Controlador de `index.html` que dibuja los gráficos con Chart.js y gestiona las ponderaciones y el upload.
-5.  **`estudiantes.js`**: Controlador de `estudiantes.html` que gestiona las búsquedas, paginación, filtros de docentes y apertura de modales.
+3.  **`app.js`**: Controlador de `index.html` que dibuja los gráficos con Chart.js y gestiona las ponderaciones y el upload.
+4.  **`estudiantes.js`**: Controlador de `estudiantes.html` que gestiona las búsquedas, paginación, filtros de docentes y apertura de modales.
 
 ## Persistencia de Datos local (`localStorage`)
 
