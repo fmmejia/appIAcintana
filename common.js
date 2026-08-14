@@ -903,7 +903,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <span id="pdf-p-period" style="font-weight: 600; color: #0f172a; font-size: 0.9rem;">-</span>
           </div>
           <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">
-            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Promedio General (CUM)</strong>
+            <strong style="color: #475569; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; display: block; margin-bottom: 1px;">Promedio General</strong>
             <span id="pdf-p-cum" style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">0.00</span>
           </div>
           <div style="flex: 1 1 calc(50% - 10px); min-width: 200px; font-size: 0.82rem;">

@@ -556,7 +556,7 @@ function buildContextSummary() {
   text += `- Corte de Unidad Evaluativa: Unidad ${unit} (Las notas y promedios se calculan dividiendo entre ${unit} evaluaciones transcurridas de laboratorios y parciales)\n`;
   text += `- Total de alumnos únicos: ${total}\n`;
   text += `- Alumnos en Riesgo Alto (Reprobados / Promedio < 6.0): ${highRisk.length}\n`;
-  text += `- Alumnos en Riesgo Medio (Alerta CUM / Promedio 6.0-6.9): ${mediumRisk.length}\n`;
+  text += `- Alumnos en Riesgo Medio (Alerta de Promedio / Promedio 6.0-6.9): ${mediumRisk.length}\n`;
   text += `- Alumnos en Riesgo Bajo / Sin Alerta (Aprobados Seguros / Promedio >= 7.0): ${safe.length}\n`;
   text += `- Alumnos con promedio general de 0.0 (inactivos o sin notas): ${zeroAverageCount}\n\n`;
 
@@ -609,7 +609,7 @@ function buildContextSummary() {
   text += `\nREGLAMENTO INSTITUCIONAL APLICADO:\n`;
   text += `- Promedio de laboratorios (40% de peso) y exámenes parciales (60% de peso).\n`;
   text += `- Nota mínima aprobatoria de materia: 6.0.\n`;
-  text += `- Meta CUM de egreso recomendada: 7.0.\n`;
+  text += `- Promedio ideal recomendado: 7.0.\n`;
 
   return text;
 }
