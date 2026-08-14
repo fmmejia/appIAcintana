@@ -1266,7 +1266,7 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: center;
   color: var(--color-primary);
   font-size: 2.2rem;
-  margin-bottom: 24px;
+  margin: 0 auto 24px auto;
   animation: pulseGlow 3s infinite;
 }
 

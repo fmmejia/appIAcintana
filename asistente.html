@@ -282,15 +282,15 @@
       
       <!-- Si la base de datos está totalmente vacía -->
       <section id="no-data-warning-panel" class="glass-card" style="display: none; max-width: 600px; margin: 40px auto; text-align: center; padding: 40px 24px;">
-        <div class="empty-state-icon" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.15); color: var(--color-risk-high); margin-bottom: 20px; animation: none;">
+        <div class="empty-state-icon" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.15); color: var(--color-risk-high); margin: 0 auto 20px auto; animation: none;">
           <i data-lucide="database-backup"></i>
         </div>
         <h2 style="font-size: 1.25rem; margin-bottom: 12px; color: var(--text-highlight);">Sin Datos Académicos en el Sistema</h2>
         <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">
           El Asistente de IA requiere de los datos estudiantiles para operar. Por favor, ve a la sección de carga para importar datos o cargar la base de simulación (Demo).
         </p>
-        <a href="cargar.html" class="btn-primary" style="text-decoration: none;">
-          <i data-lucide="database"></i> Ir a Cargar Datos
+        <a href="cargar.html" class="btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+          <i data-lucide="database"></i> <span data-i18n="empty_state_btn">Ir a Cargar Datos</span>
         </a>
       </section>
 
