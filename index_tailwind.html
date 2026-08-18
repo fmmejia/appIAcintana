@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Deserción | Atenas Tailwind Demo</title>
+  <!-- Tailwind CSS v4 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="h-full text-slate-700 antialiased">
+
+  <div class="flex h-full min-h-screen">
+    
+    <!-- SIDEBAR -->
+    <aside class="hidden w-64 bg-slate-900 text-slate-400 md:flex md:flex-col">
+      <!-- Sidebar Header / Logo -->
+      <div class="flex h-16 items-center gap-3 px-6 border-b border-slate-800">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
+          <i data-lucide="graduation-cap" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-white tracking-wider uppercase">Atenas Risk</h2>
+          <p class="text-xs text-slate-500 font-medium">Tailwind CSS Demo</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex-1 space-y-1 px-4 py-6">
+        <a href="#" class="flex items-center gap-3 rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-medium text-white transition-colors">
+          <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+          <span>Resumen Académico</span>
+        </a>
+        
+        <div class="space-y-1">
+          <button class="flex w-full items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-slate-800 hover:text-white transition-colors">
+            <span class="flex items-center gap-3">
+              <i data-lucide="users" class="h-4 w-4"></i>
+              <span>Estudiantes</span>
+            </span>
+            <i data-lucide="chevron-down" class="h-3 w-3 text-slate-500"></i>
+          </button>
+          <div class="pl-7 space-y-1">
+            <a href="#" class="block rounded-md px-3 py-1.5 text-xs font-medium hover:text-white transition-colors">Listado Completo</a>
+            <a href="#" class="block rounded-md px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 transition-colors">Casos en Riesgo Alto</a>
+            <a href="#" class="block rounded-md px-3 py-1.5 text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors">Casos en Riesgo Medio</a>
+          </div>
+        </div>
+
+        <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-slate-800 hover:text-white transition-colors">
+          <i data-lucide="info" class="h-4 w-4"></i>
+          <span>Metodología</span>
+        </a>
+
+        <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-slate-800 hover:text-white transition-colors">
+          <i data-lucide="sparkles" class="h-4 w-4 text-indigo-400"></i>
+          <span>Asistente Virtual</span>
+        </a>
+
+        <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-slate-800 hover:text-white transition-colors">
+          <i data-lucide="database" class="h-4 w-4"></i>
+          <span>Cargar Datos</span>
+        </a>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
+        Plataforma Atenas &copy; 2026
+      </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <div class="flex flex-1 flex-col overflow-hidden">
+      
+      <!-- TOP HEADER -->
+      <header class="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-xs">
+        <div class="flex items-center gap-4">
+          <button class="md:hidden rounded-lg p-2 hover:bg-slate-100 text-slate-500">
+            <i data-lucide="menu" class="h-5 w-5"></i>
+          </button>
+          <div>
+            <h1 class="text-lg font-bold text-slate-900 leading-tight">Resumen de Rendimiento</h1>
+            <p class="text-xs text-slate-500 hidden sm:block">Análisis predictivo de alertas académicas de estudiantes.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Idioma Toggle -->
+          <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
+            <button class="rounded-md bg-white px-3 py-1 text-slate-900 shadow-xs">ES</button>
+            <button class="rounded-md px-3 py-1 text-slate-500 hover:text-slate-900">EN</button>
+          </div>
+
+          <!-- Selector de Periodo -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider hidden lg:inline">Ciclo Activo:</span>
+            <select class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden">
+              <option>Ciclo 1 - 2026</option>
+              <option>Ciclo 2 - 2026</option>
+            </select>
+          </div>
+
+          <!-- Theme Toggle (Static) -->
+          <button class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900">
+            <i data-lucide="sun" class="h-5 w-5"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="flex-1 overflow-y-auto px-6 py-8">
+        
+        <!-- CALENDAR / ACTIVE UNIT WIDGET -->
+        <div class="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div class="flex items-center gap-4">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <i data-lucide="calendar" class="h-6 w-6"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-slate-900">Ciclo 1 - 2026</h3>
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/10 ring-inset">Activo</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Semana 8 de 20 (Inicio: 01/02/2026 - Fin: 30/06/2026)</p>
+            </div>
+          </div>
+          
+          <!-- Progress bar -->
+          <div class="flex-1 max-w-lg">
+            <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1.5">
+              <span>Unidad Evaluativa Activa: <strong>Unidad 2</strong></span>
+              <span class="text-indigo-600">40% del ciclo completado</span>
+            </div>
+            <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width: 40%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI CARDS GRID -->
+        <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <!-- Card 1: CUM -->
+          <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Promedio General</span>
+              <div class="rounded-lg bg-indigo-50 p-2 text-indigo-600">
+                <i data-lucide="award" class="h-5 w-5"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-slate-900 tracking-tight">7.82</span>
+              <span class="text-xs font-medium text-slate-400">/10</span>
+            </div>
+            <p class="mt-2 text-xs text-emerald-600 flex items-center gap-1">
+              <i data-lucide="trending-up" class="h-3 w-3"></i>
+              <span>+0.21 respecto a ciclo anterior</span>
+            </p>
+          </div>
+
+          <!-- Card 2: Evaluados -->
+          <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Alumnos Analizados</span>
+              <div class="rounded-lg bg-blue-50 p-2 text-blue-600">
+                <i data-lucide="users" class="h-5 w-5"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-slate-900 tracking-tight">45</span>
+              <span class="text-xs font-medium text-slate-400">estudiantes</span>
+            </div>
+            <div class="mt-2 text-xs text-slate-500">100% de la matrícula del ciclo</div>
+          </div>
+
+          <!-- Card 3: Riesgo Alto -->
+          <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Casos en Riesgo Alto</span>
+              <div class="rounded-lg bg-rose-50 p-2 text-rose-600">
+                <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-rose-600 tracking-tight">6</span>
+              <span class="text-xs font-medium text-rose-400">alumnos</span>
+            </div>
+            <div class="mt-2 text-xs text-rose-600 flex items-center gap-1 font-medium">
+              <span>Requieren intervención inmediata</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Asistencias -->
+          <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Asistencia Promedio</span>
+              <div class="rounded-lg bg-amber-50 p-2 text-amber-600">
+                <i data-lucide="user-check" class="h-5 w-5"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-slate-900 tracking-tight">88.5%</span>
+            </div>
+            <p class="mt-2 text-xs text-amber-600 flex items-center gap-1">
+              <i data-lucide="trending-down" class="h-3 w-3"></i>
+              <span>-1.2% por debajo de la meta</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- MAIN LAYOUT GRID -->
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          
+          <!-- LEFT / CENTER COLUMN (2/3 width) - STUDENTS TABLE -->
+          <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Filters and Search -->
+            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+              <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                <!-- Search bar -->
+                <div class="relative w-full sm:max-w-xs">
+                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <i data-lucide="search" class="h-4 w-4 text-slate-400"></i>
+                  </div>
+                  <input type="text" placeholder="Buscar por carnet o nombre..." class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden">
+                </div>
+                
+                <!-- Filter Dropdowns -->
+                <div class="flex w-full sm:w-auto items-center justify-end gap-3">
+                  <select class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-xs focus:outline-hidden">
+                    <option>Todas las Carreras</option>
+                    <option>Ciencias de la Computación</option>
+                    <option>Diseño Gráfico</option>
+                    <option>Ingeniería de Videojuegos</option>
+                  </select>
+
+                  <select class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-xs focus:outline-hidden">
+                    <option>Todos los Riesgos</option>
+                    <option class="text-rose-600">Riesgo Alto</option>
+                    <option class="text-amber-600">Riesgo Medio</option>
+                    <option class="text-emerald-600">Riesgo Bajo</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Students List Panel -->
+            <div class="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+              <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-slate-800">Casos Académicos prioritarios</h3>
+                <span class="text-xs font-medium text-slate-500">Mostrando 4 estudiantes</span>
+              </div>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      <th class="px-6 py-3">Estudiante</th>
+                      <th class="px-6 py-3">Carrera</th>
+                      <th class="px-6 py-3 text-center">Materias Rep.</th>
+                      <th class="px-6 py-3 text-center">CUM</th>
+                      <th class="px-6 py-3 text-center">Estado Alerta</th>
+                      <th class="px-6 py-3 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-sm">
+                    <!-- Student Row 1 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-700 font-bold text-xs">
+                            MM
+                          </div>
+                          <div>
+                            <span class="block font-semibold text-slate-900">Mejía, Mario</span>
+                            <span class="block text-xs text-slate-500 font-mono">MM12345</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="block font-medium text-slate-700">Ing. de Videojuegos</span>
+                      </td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center justify-center rounded-md bg-rose-50 px-2 py-1 text-xs font-bold text-rose-700 border border-rose-100">2</span>
+                      </td>
+                      <td class="px-6 py-4 text-center font-semibold font-mono text-slate-900">5.82</td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-100">
+                          <span class="h-1.5 w-1.5 rounded-full bg-rose-600"></span>
+                          Riesgo Alto
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <button onclick="openModal('mario')" class="rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 text-xs font-semibold transition-colors">Ver Ficha</button>
+                      </td>
+                    </tr>
+
+                    <!-- Student Row 2 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 font-bold text-xs">
+                            AR
+                          </div>
+                          <div>
+                            <span class="block font-semibold text-slate-900">Aguilar, Rosa</span>
+                            <span class="block text-xs text-slate-500 font-mono">AR98765</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="block font-medium text-slate-700">Lic. Diseño Gráfico</span>
+                      </td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center justify-center rounded-md bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 border border-amber-100">1</span>
+                      </td>
+                      <td class="px-6 py-4 text-center font-semibold font-mono text-slate-900">6.40</td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 border border-amber-100">
+                          <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                          Riesgo Medio
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <button onclick="openModal('rosa')" class="rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 text-xs font-semibold transition-colors">Ver Ficha</button>
+                      </td>
+                    </tr>
+
+                    <!-- Student Row 3 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
+                            CP
+                          </div>
+                          <div>
+                            <span class="block font-semibold text-slate-900">Castillo, Pedro</span>
+                            <span class="block text-xs text-slate-500 font-mono">CP24680</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="block font-medium text-slate-700">Ing. Ciencias Computación</span>
+                      </td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center justify-center rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-400">0</span>
+                      </td>
+                      <td class="px-6 py-4 text-center font-semibold font-mono text-slate-900">8.38</td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100">
+                          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                          Riesgo Bajo
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <button onclick="openModal('pedro')" class="rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 text-xs font-semibold transition-colors">Ver Ficha</button>
+                      </td>
+                    </tr>
+
+                    <!-- Student Row 4 -->
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-rose-700 font-bold text-xs">
+                            JG
+                          </div>
+                          <div>
+                            <span class="block font-semibold text-slate-900">Juárez, Gabriel</span>
+                            <span class="block text-xs text-slate-500 font-mono">JG13579</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="block font-medium text-slate-700">Ing. Control Eléctrico</span>
+                      </td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center justify-center rounded-md bg-rose-50 px-2 py-1 text-xs font-bold text-rose-700 border border-rose-100">1</span>
+                      </td>
+                      <td class="px-6 py-4 text-center font-semibold font-mono text-slate-900">5.95</td>
+                      <td class="px-6 py-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-100">
+                          <span class="h-1.5 w-1.5 rounded-full bg-rose-600"></span>
+                          Riesgo Alto
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <button onclick="openModal('gabriel')" class="rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 text-xs font-semibold transition-colors">Ver Ficha</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN (1/3 width) - CHART & INSIGHTS -->
+          <div class="space-y-6">
+            
+            <!-- Risk Donut Chart -->
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-xs flex flex-col items-center">
+              <h3 class="text-sm font-bold text-slate-800 self-start mb-6">Distribución de Riesgos</h3>
+              
+              <!-- SVG Donut Chart Mockup -->
+              <div class="relative flex items-center justify-center h-48 w-48">
+                <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                  <!-- Low Risk circle (60%) -->
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e2e8f0" stroke-width="3"></circle>
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10b981" stroke-width="3.2" stroke-dasharray="60 40" stroke-dashoffset="0"></circle>
+                  <!-- Medium Risk circle (25%) -->
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f59e0b" stroke-width="3.2" stroke-dasharray="25 75" stroke-dashoffset="-60"></circle>
+                  <!-- High Risk circle (15%) -->
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" stroke-width="3.2" stroke-dasharray="15 85" stroke-dashoffset="-85"></circle>
+                </svg>
+                <div class="absolute flex flex-col items-center text-center">
+                  <span class="text-3xl font-extrabold text-slate-900">45</span>
+                  <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Alumnos</span>
+                </div>
+              </div>
+
+              <!-- Legends -->
+              <div class="mt-6 w-full space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-600">
+                  <span class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-emerald-500"></span>
+                    Riesgo Bajo (Aprobados)
+                  </span>
+                  <span>27 alumnos (60%)</span>
+                </div>
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-600">
+                  <span class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-amber-500"></span>
+                    Riesgo Medio (Regulares)
+                  </span>
+                  <span>11 alumnos (25%)</span>
+                </div>
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-600">
+                  <span class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-rose-500"></span>
+                    Riesgo Alto (Fallas)
+                  </span>
+                  <span>7 alumnos (15%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Critical Careers list -->
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+              <h3 class="text-sm font-bold text-slate-800 mb-5">Alertas por Carrera</h3>
+              <div class="space-y-4">
+                
+                <div>
+                  <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                    <span>Diseño Gráfico</span>
+                    <span class="text-rose-600">3 Alumnos en Riesgo</span>
+                  </div>
+                  <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-rose-500 rounded-full" style="width: 75%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                    <span>Ing. de Videojuegos</span>
+                    <span class="text-rose-600 font-medium">2 Alumnos en Riesgo</span>
+                  </div>
+                  <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-rose-500 rounded-full" style="width: 50%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                    <span>Ing. en Control Eléctrico</span>
+                    <span class="text-amber-600 font-medium font-semibold">1 Alumno en Riesgo</span>
+                  </div>
+                  <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full" style="width: 25%"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- DETAIL MODAL (Hidden by default, triggered by javascript) -->
+  <div id="student-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" onclick="closeModal()"></div>
+    
+    <!-- Modal Panel container -->
+    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-6">
+      <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all w-full max-w-4xl border border-slate-200">
+        <!-- Close button -->
+        <button onclick="closeModal()" class="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+
+        <!-- Modal Header / Student Meta -->
+        <div class="bg-slate-50 border-b border-slate-100 px-6 py-6 sm:px-8">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div id="modal-avatar" class="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white font-extrabold text-lg uppercase">
+                MM
+              </div>
+              <div>
+                <h2 id="modal-student-name" class="text-xl font-bold text-slate-900">Mejía, Mario</h2>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-500 font-medium">
+                  <span id="modal-student-carnet" class="font-mono">MM12345</span>
+                  <span class="text-slate-300">|</span>
+                  <span id="modal-student-carrera">Ingeniería en Diseños y Desarrollo de Videojuegos</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Consolidated Metrics -->
+            <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200/60 shadow-xs">
+              <div class="text-center px-3 border-r border-slate-100">
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Promedio</span>
+                <span id="modal-cum-value" class="text-lg font-bold text-slate-900">5.82</span>
+              </div>
+              <div class="text-center px-3 border-r border-slate-100">
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Materias</span>
+                <span class="text-lg font-bold text-slate-900">4</span>
+              </div>
+              <div class="text-center px-3">
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reprobadas</span>
+                <span id="modal-reprobando-count" class="text-lg font-bold text-rose-600">2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Content Grid -->
+        <div class="px-6 py-6 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <!-- Column 1 & 2: Grades & History -->
+          <div class="md:col-span-2 space-y-6">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i data-lucide="book-open" class="h-4 w-4 text-indigo-500"></i>
+              Historial de Calificaciones
+            </h3>
+            
+            <div class="rounded-xl border border-slate-200 overflow-hidden">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 bg-slate-50 text-slate-500 font-bold uppercase tracking-wider">
+                    <th class="px-4 py-3">Materia</th>
+                    <th class="px-4 py-3 text-center">Laboratorios (40%)</th>
+                    <th class="px-4 py-3 text-center">Parciales (60%)</th>
+                    <th class="px-4 py-3 text-center">Nota Final</th>
+                    <th class="px-4 py-3 text-right">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="modal-subjects-body" class="divide-y divide-slate-100">
+                  <!-- Inject dynamic subjects here -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Academic Alerts -->
+            <div class="space-y-3">
+              <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Alertas Académicas Específicas</h4>
+              <div id="modal-alerts-list" class="space-y-2">
+                <!-- Inject dynamic alerts here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3: Diagnostic and Recommendations -->
+          <div class="space-y-6">
+            <!-- Diagnostic Alert Card -->
+            <div id="modal-diagnostic-card" class="rounded-xl p-5 border text-xs">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5" id="modal-diagnostic-icon">
+                  <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                </div>
+                <div>
+                  <h4 id="modal-diagnostic-title" class="font-bold text-slate-900 text-sm">Alerta Académica: Riesgo Crítico</h4>
+                  <p id="modal-diagnostic-desc" class="mt-1 text-slate-600 leading-relaxed">
+                    El estudiante presenta asignaturas reprobadas y un promedio general inferior a la nota de aprobación regulada (6.0). Se requiere intervención tutorial de inmediato.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tutorial Plan Suggestion -->
+            <div class="space-y-3">
+              <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="h-4 w-4 text-indigo-500"></i>
+                Plan de Acompañamiento
+              </h4>
+              <div class="space-y-2 text-xs" id="modal-recommendations-list">
+                <!-- Inject recommendations -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="bg-slate-50 border-t border-slate-100 px-6 py-4 sm:px-8 flex justify-end">
+          <button onclick="closeModal()" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50">Cerrar Ficha</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT FOR INTERACTIVE DEMO -->
+  <script>
+    // Mock Data for students and subjects
+    const mockStudents = {
+      mario: {
+        nombres: "Mario",
+        apellidos: "Mejía",
+        carnet: "MM12345",
+        carrera: "Ingeniería en Diseños y Desarrollo de Videojuegos",
+        cum: "5.82",
+        reprobadas: 2,
+        risk: "high",
+        subjects: [
+          { name: "Cálculo Integral", labs: "4.5", pars: "5.2", final: "4.92", status: "failed" },
+          { name: "Física Mecánica", labs: "5.0", pars: "6.2", final: "5.72", status: "failed" },
+          { name: "Programación de Gráficos", labs: "8.2", pars: "7.0", final: "7.48", status: "passed" },
+          { name: "Estructuras de Datos", labs: "7.8", pars: "6.8", final: "7.20", status: "passed" }
+        ],
+        alerts: [
+          { type: "fail", msg: "Reprobando <strong>Cálculo Integral</strong> — nota 4.92/10" },
+          { type: "fail", msg: "Reprobando <strong>Física Mecánica</strong> — nota 5.72/10" },
+          { type: "high", msg: "Riesgo alto de deserción: promedio general (5.82/10) por debajo del mínimo regulado (6.0)" }
+        ],
+        diag: {
+          title: "Alerta Académica: Riesgo Crítico",
+          desc: "El estudiante presenta 2 asignatura(s) reprobada(s) y un promedio general de 5.82/10, que es inferior a la nota de aprobación regulada (6.0). Se requiere intervención tutorial de inmediato.",
+          color: "bg-rose-50 text-rose-800 border-rose-200"
+        },
+        recs: [
+          "<strong>Tutoría de Permanencia:</strong> Programar sesión urgente de asesoramiento individualizado para trazar un plan remedial.",
+          "<strong>Refuerzo Práctico de Labs:</strong> Asistir a talleres de laboratorio adicionales en Cálculo Integral y Física.",
+          "<strong>Rigor de Exámenes:</strong> Asignar tutor conceptual de cara a las próximas evaluaciones parciales."
+        ]
+      },
+      rosa: {
+        nombres: "Rosa",
+        apellidos: "Aguilar",
+        carnet: "AR98765",
+        carrera: "Licenciatura en Diseño Gráfico Publicitario",
+        cum: "6.40",
+        reprobadas: 1,
+        risk: "medium",
+        subjects: [
+          { name: "Fotografía Publicitaria", labs: "5.2", pars: "5.8", final: "5.56", status: "failed" },
+          { name: "Historia del Arte", labs: "7.0", pars: "6.8", final: "6.88", status: "passed" },
+          { name: "Diseño Vectorial II", labs: "8.5", pars: "7.2", final: "7.72", status: "passed" },
+          { name: "Tipografía Avanzada", labs: "6.0", pars: "5.0", final: "5.44", status: "failed" }
+        ],
+        alerts: [
+          { type: "fail", msg: "Reprobando <strong>Fotografía Publicitaria</strong> — nota 5.56/10" },
+          { type: "warn", msg: "Bajo rendimiento en <strong>Tipografía Avanzada</strong> — nota 5.44/10" }
+        ],
+        diag: {
+          title: "Alerta de Permanencia: Promedio Regular",
+          desc: "El alumno se encuentra aprobando el promedio acumulado general de 6.40/10, pero está por debajo del promedio adecuado (7.0) recomendado para la permanencia y presenta 1 materia reprobada.",
+          color: "bg-amber-50 text-amber-800 border-amber-200"
+        },
+        recs: [
+          "<strong>Plan de Elevación de Promedio:</strong> Establecer una meta personal de nota mínima de 7.5 en Fotografía y Tipografía.",
+          "<strong>Tutoría Teórica de Exámenes:</strong> Incorporar a la alumna a círculos de estudio de refuerzo conceptual."
+        ]
+      },
+      pedro: {
+        nombres: "Pedro",
+        apellidos: "Castillo",
+        carnet: "CP24680",
+        carrera: "Ingeniería en Ciencias de la Computación",
+        cum: "8.38",
+        reprobadas: 0,
+        risk: "low",
+        subjects: [
+          { name: "Inteligencia Artificial", labs: "8.8", pars: "9.2", final: "9.04", status: "passed" },
+          { name: "Bases de Datos II", labs: "7.8", pars: "8.0", final: "7.92", status: "passed" },
+          { name: "Ingeniería de Software II", labs: "8.2", pars: "8.5", final: "8.38", status: "passed" },
+          { name: "Redes de Computadoras", labs: "8.0", pars: "8.2", final: "8.12", status: "passed" }
+        ],
+        alerts: [
+          { type: "safe", msg: "Rendimiento estable: promedio general (8.38/10) alineado con metas institucionales" }
+        ],
+        diag: {
+          title: "Estabilidad Académica",
+          desc: "El estudiante mantiene un rendimiento satisfactorio con un promedio general de 8.38/10. Su permanencia no corre riesgo y cumple con holgura los criterios institucionales de permanencia.",
+          color: "bg-emerald-50 text-emerald-800 border-emerald-200"
+        },
+        recs: [
+          "<strong>Mantener Hábitos de Estudio:</strong> El estudiante mantiene un rendimiento sobresaliente. Se sugiere invitarlo a participar como tutor par o monitor académico."
+        ]
+      },
+      gabriel: {
+        nombres: "Gabriel",
+        apellidos: "Juárez",
+        carnet: "JG13579",
+        carrera: "Ingeniería en Control Eléctrico",
+        cum: "5.95",
+        reprobadas: 1,
+        risk: "high",
+        subjects: [
+          { name: "Circuitos Eléctricos II", labs: "4.8", pars: "5.0", final: "4.92", status: "failed" },
+          { name: "Electromagnetismo", labs: "6.5", pars: "6.0", final: "6.20", status: "passed" },
+          { name: "Matemática IV", labs: "7.0", pars: "6.0", final: "6.40", status: "passed" },
+          { name: "Sistemas Dinámicos", labs: "6.8", pars: "6.0", final: "6.32", status: "passed" }
+        ],
+        alerts: [
+          { type: "fail", msg: "Reprobando <strong>Circuitos Eléctricos II</strong> — nota 4.92/10" },
+          { type: "high", msg: "Riesgo alto de deserción: promedio general (5.95/10) inferior al mínimo de aprobación regulado (6.0)" }
+        ],
+        diag: {
+          title: "Alerta Académica: Riesgo Crítico",
+          desc: "El estudiante presenta 1 asignatura(s) reprobada(s) y un promedio general de 5.95/10, que es inferior a la nota de aprobación regulada (6.0). Se requiere intervención tutorial de inmediato.",
+          color: "bg-rose-50 text-rose-800 border-rose-200"
+        },
+        recs: [
+          "<strong>Tutoría de Permanencia:</strong> Programar sesión urgente de asesoramiento individualizado para trazar un plan remedial.",
+          "<strong>Refuerzo Práctico de Labs:</strong> Asistir a talleres de laboratorio adicionales en Circuitos Eléctricos."
+        ]
+      }
+    };
+
+    // Open Modal Function
+    function openModal(studentKey) {
+      const student = mockStudents[studentKey];
+      if (!student) return;
+
+      // Populate Name, Avatar, Career, Carnet
+      document.getElementById("modal-avatar").textContent = (student.nombres[0] + student.apellidos[0]).toUpperCase();
+      document.getElementById("modal-student-name").textContent = `${student.apellidos}, ${student.nombres}`;
+      document.getElementById("modal-student-carnet").textContent = student.carnet;
+      document.getElementById("modal-student-carrera").textContent = student.carrera;
+      
+      // Populate consolidated values
+      document.getElementById("modal-cum-value").textContent = student.cum;
+      document.getElementById("modal-reprobando-count").textContent = student.reprobadas;
+
+      // Build Subjects Table Body
+      const subjectsBody = document.getElementById("modal-subjects-body");
+      subjectsBody.innerHTML = "";
+      student.subjects.forEach(s => {
+        const badgeColor = s.status === 'failed' ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100';
+        const badgeLabel = s.status === 'failed' ? 'Reprobado' : 'Aprobado';
+        
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-slate-100 hover:bg-slate-50/50";
+        tr.innerHTML = `
+          <td class="px-4 py-3.5 font-semibold text-slate-800">${s.name}</td>
+          <td class="px-4 py-3.5 text-center font-mono">${s.labs}</td>
+          <td class="px-4 py-3.5 text-center font-mono">${s.pars}</td>
+          <td class="px-4 py-3.5 text-center font-mono font-bold">${s.final}</td>
+          <td class="px-4 py-3.5 text-right">
+            <span class="inline-flex items-center rounded-md px-2 py-1 text-[11px] font-bold border ${badgeColor}">
+              ${badgeLabel}
+            </span>
+          </td>
+        `;
+        subjectsBody.appendChild(tr);
+      });
+
+      // Build Alerts List
+      const alertsList = document.getElementById("modal-alerts-list");
+      alertsList.innerHTML = "";
+      student.alerts.forEach(a => {
+        const div = document.createElement("div");
+        let alertClass = "bg-slate-50 text-slate-600 border-slate-100";
+        let iconName = "info";
+        if (a.type === 'fail') {
+          alertClass = "bg-rose-50/50 text-rose-700 border-rose-100";
+          iconName = "alert-triangle";
+        } else if (a.type === 'warn') {
+          alertClass = "bg-amber-50/50 text-amber-700 border-amber-100";
+          iconName = "alert-circle";
+        } else if (a.type === 'safe') {
+          alertClass = "bg-emerald-50/50 text-emerald-700 border-emerald-100";
+          iconName = "check-circle";
+        }
+        
+        div.className = `flex items-center gap-2.5 rounded-lg border p-3 ${alertClass}`;
+        div.innerHTML = `
+          <i data-lucide="${iconName}" class="h-4 w-4 shrink-0"></i>
+          <span>${a.msg}</span>
+        `;
+        alertsList.appendChild(div);
+      });
+
+      // Build Diagnostic Card
+      const diagCard = document.getElementById("modal-diagnostic-card");
+      diagCard.className = `rounded-xl p-5 border text-xs ${student.diag.color}`;
+      document.getElementById("modal-diagnostic-title").textContent = student.diag.title;
+      document.getElementById("modal-diagnostic-desc").textContent = student.diag.desc;
+      
+      const diagIcon = document.getElementById("modal-diagnostic-icon");
+      let iconColorClass = "text-rose-600";
+      let diagIconName = "alert-triangle";
+      if (student.risk === 'medium') {
+        iconColorClass = "text-amber-600";
+        diagIconName = "alert-circle";
+      } else if (student.risk === 'low') {
+        iconColorClass = "text-emerald-600";
+        diagIconName = "check-circle";
+      }
+      diagIcon.innerHTML = `<i data-lucide="${diagIconName}" class="h-5 w-5 ${iconColorClass}"></i>`;
+
+      // Build Recommendations
+      const recsList = document.getElementById("modal-recommendations-list");
+      recsList.innerHTML = "";
+      student.recs.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "flex gap-2.5 items-start p-3 bg-slate-50 rounded-lg border border-slate-150";
+        div.innerHTML = `
+          <i data-lucide="check" class="h-4 w-4 text-indigo-500 shrink-0 mt-0.5"></i>
+          <span class="text-slate-600">${r}</span>
+        `;
+        recsList.appendChild(div);
+      });
+
+      // Refresh Lucide Icons inside modal
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+
+      // Show Modal
+      document.getElementById("student-modal").classList.remove("hidden");
+    }
+
+    // Close Modal Function
+    function closeModal() {
+      document.getElementById("student-modal").classList.add("hidden");
+    }
+
+    // Initialize Lucide Icons on load
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
+
+</body>
+</html>
