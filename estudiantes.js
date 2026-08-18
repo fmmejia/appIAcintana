@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Escuchar cambios en localStorage desde otras pestañas/páginas
 window.addEventListener("storage", (e) => {
-  if (e.key === "atenas_students" || e.key === "atenas_config") {
+  if (e.key === "atenas_students" || e.key === "atenas_config" || e.key === "atenas_system_config") {
     loadPersistedData();
   }
   if (e.key === "atenas_theme") {
@@ -83,13 +83,7 @@ window.addEventListener("storage", (e) => {
 // Cargar Datos Guardados en LocalStorage
 function loadPersistedData() {
   const savedStudents = localStorage.getItem("atenas_students");
-
-  state.config = {
-    thresholdFail: SYSTEM_CONFIG.thresholdFail,
-    thresholdCum: SYSTEM_CONFIG.thresholdCum,
-    weightLab: SYSTEM_CONFIG.weightLab,
-    weightPar: SYSTEM_CONFIG.weightPar
-  };
+  state.config = getSystemConfig();
 
   if (savedStudents) {
     const allStudents = JSON.parse(savedStudents);

@@ -88,32 +88,41 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCalendarWidgetUI();
 });
 
-// Sincronizar los textos de configuración en el DOM con el estado real
+// Sincronizar los textos e inputs de configuración en el DOM con el estado real
 function syncConfigInputs() {
-  const thresholdFail = 6.0;
-  const thresholdCum = 7.0;
+  const cfg = state.config || getSystemConfig();
+  const labPercent = Math.round((cfg.weightLab || 0.4) * 100);
+  const parPercent = Math.round((cfg.weightPar || 0.6) * 100);
+
+  const inputLab = document.getElementById("input-weight-lab");
+  const inputPar = document.getElementById("input-weight-par");
+  const displayLab = document.getElementById("display-lab-weight");
+  const displayPar = document.getElementById("display-par-weight");
+  const formulaCode = document.getElementById("formula-preview-code");
+
+  if (inputLab) inputLab.value = labPercent;
+  if (inputPar) inputPar.value = parPercent;
+  if (displayLab) displayLab.textContent = labPercent;
+  if (displayPar) displayPar.textContent = parPercent;
+  if (formulaCode) {
+    formulaCode.innerHTML = `Nota Final = (Prom. Labs &times; ${(cfg.weightLab).toFixed(2)}) + (Prom. Parciales &times; ${(cfg.weightPar).toFixed(2)})`;
+  }
 
   // También actualizar los textos del KPI
   const kpiFail = document.getElementById("kpi-fail-threshold");
-  if (kpiFail) kpiFail.textContent = thresholdFail.toFixed(1);
+  if (kpiFail) kpiFail.textContent = (cfg.thresholdFail || 6.0).toFixed(1);
 
   const kpiWarnLow = document.getElementById("kpi-warn-low");
-  if (kpiWarnLow) kpiWarnLow.textContent = thresholdFail.toFixed(1);
+  if (kpiWarnLow) kpiWarnLow.textContent = (cfg.thresholdFail || 6.0).toFixed(1);
 
   const kpiWarnHigh = document.getElementById("kpi-warn-high");
-  if (kpiWarnHigh) kpiWarnHigh.textContent = (thresholdCum - 0.1).toFixed(1);
+  if (kpiWarnHigh) kpiWarnHigh.textContent = ((cfg.thresholdCum || 7.0) - 0.1).toFixed(1);
 }
 
 // Cargar Datos Guardados en LocalStorage
 function loadPersistedData() {
   const savedStudents = localStorage.getItem("atenas_students");
-
-  state.config = {
-    thresholdFail: SYSTEM_CONFIG.thresholdFail,
-    thresholdCum: SYSTEM_CONFIG.thresholdCum,
-    weightLab: SYSTEM_CONFIG.weightLab,
-    weightPar: SYSTEM_CONFIG.weightPar
-  };
+  state.config = getSystemConfig();
 
   if (savedStudents) {
     const allStudents = JSON.parse(savedStudents);
@@ -133,7 +142,7 @@ function loadPersistedData() {
 
 // Escuchar cambios en localStorage desde otras pestañas/páginas
 window.addEventListener("storage", (e) => {
-  if (e.key === "atenas_students" || e.key === "atenas_config") {
+  if (e.key === "atenas_students" || e.key === "atenas_config" || e.key === "atenas_system_config") {
     loadPersistedData();
     syncConfigInputs();
     handleHashRoute();
@@ -230,6 +239,58 @@ function setupEventListeners() {
           state.selectedStudent = targetStudent;
           fillModalDetails(targetStudent, state.selectedStudentPeriods);
         }
+      }
+    });
+  }
+
+  // Control de Sliders de Ponderación Interactivos
+  const inputLab = document.getElementById("input-weight-lab");
+  const inputPar = document.getElementById("input-weight-par");
+  const btnResetWeights = document.getElementById("btn-reset-weights");
+
+  function handleWeightChange(newLabPercent) {
+    const labVal = Math.max(0, Math.min(100, parseInt(newLabPercent, 10) || 0));
+    const parVal = 100 - labVal;
+
+    state.config.weightLab = labVal / 100;
+    state.config.weightPar = parVal / 100;
+
+    saveSystemConfig(state.config);
+    recalculateAllStudentsWithConfig(state.config);
+
+    // Recalcular métricas de los estudiantes en memoria
+    const activePeriod = getActivePeriod();
+    const periodsConfig = getPeriodsConfig();
+    const periodConfig = periodsConfig[activePeriod] || DEFAULT_PERIODS_CONFIG["Ciclo 1 - 2026"];
+    state.students.forEach(s => {
+      calculateStudentMetrics(s, state.config, periodConfig);
+    });
+
+    syncConfigInputs();
+    if (state.students.length > 0) {
+      updateDashboardUI();
+    }
+  }
+
+  if (inputLab) {
+    inputLab.addEventListener("input", (e) => {
+      handleWeightChange(e.target.value);
+    });
+  }
+
+  if (inputPar) {
+    inputPar.addEventListener("input", (e) => {
+      const parVal = Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0));
+      handleWeightChange(100 - parVal);
+    });
+  }
+
+  if (btnResetWeights) {
+    btnResetWeights.addEventListener("click", () => {
+      handleWeightChange(40);
+      const msg = typeof t === "function" ? t("msg_weights_reset") : "Ponderaciones restablecidas a los valores por defecto (40% Labs / 60% Parciales).";
+      if (typeof showToast === "function") {
+        showToast(msg, "success");
       }
     });
   }

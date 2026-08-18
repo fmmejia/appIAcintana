@@ -18,13 +18,57 @@ const DEFAULT_PERIODS_CONFIG = {
 
 const DEFAULT_ACTIVE_PERIOD = "Ciclo 1 - 2026";
 
-// Umbrales fijos institucionales
-const SYSTEM_CONFIG = {
+// Umbrales y ponderaciones institucionales por defecto
+const DEFAULT_SYSTEM_CONFIG = {
   thresholdFail: 6.0,
   thresholdCum: 7.0,
   weightLab: 0.4,
   weightPar: 0.6
 };
+
+// Variable compatible hacia atrás
+const SYSTEM_CONFIG = { ...DEFAULT_SYSTEM_CONFIG };
+
+// Obtener configuración de ponderaciones y umbrales
+function getSystemConfig() {
+  const data = localStorage.getItem("atenas_system_config");
+  if (!data) {
+    return { ...DEFAULT_SYSTEM_CONFIG };
+  }
+  try {
+    const parsed = JSON.parse(data);
+    return {
+      thresholdFail: typeof parsed.thresholdFail === 'number' ? parsed.thresholdFail : 6.0,
+      thresholdCum: typeof parsed.thresholdCum === 'number' ? parsed.thresholdCum : 7.0,
+      weightLab: typeof parsed.weightLab === 'number' ? parsed.weightLab : 0.4,
+      weightPar: typeof parsed.weightPar === 'number' ? parsed.weightPar : 0.6
+    };
+  } catch (e) {
+    return { ...DEFAULT_SYSTEM_CONFIG };
+  }
+}
+
+// Guardar configuración de ponderaciones y umbrales
+function saveSystemConfig(config) {
+  localStorage.setItem("atenas_system_config", JSON.stringify(config));
+}
+
+// Recalcular métricas de todos los estudiantes almacenados con la nueva configuración
+function recalculateAllStudentsWithConfig(newConfig) {
+  const saved = localStorage.getItem("atenas_students");
+  if (!saved) return;
+  try {
+    const students = JSON.parse(saved);
+    const periodsConfig = getPeriodsConfig();
+    students.forEach(s => {
+      const pConfig = periodsConfig[s.periodo] || DEFAULT_PERIODS_CONFIG["Ciclo 1 - 2026"];
+      calculateStudentMetrics(s, newConfig, pConfig);
+    });
+    localStorage.setItem("atenas_students", JSON.stringify(students));
+  } catch (e) {
+    console.error("Error al recalcular estudiantes", e);
+  }
+}
 
 // Obtener todas las configuraciones de periodos
 function getPeriodsConfig() {

@@ -41,13 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Cargar Datos Guardados en LocalStorage
 function loadPersistedData() {
   const savedStudents = localStorage.getItem("atenas_students");
-
-  state.config = {
-    thresholdFail: SYSTEM_CONFIG.thresholdFail,
-    thresholdCum: SYSTEM_CONFIG.thresholdCum,
-    weightLab: SYSTEM_CONFIG.weightLab,
-    weightPar: SYSTEM_CONFIG.weightPar
-  };
+  state.config = getSystemConfig();
 
   if (savedStudents) {
     state.students = JSON.parse(savedStudents);
@@ -314,9 +308,10 @@ function setupEventListeners() {
 
       // Recalcular notas de todos los estudiantes correspondientes a este periodo
       let recalculados = 0;
+      const currentSysConfig = state.config || getSystemConfig();
       state.students.forEach(student => {
         if (student.periodo === activePeriod) {
-          calculateStudentMetrics(student, SYSTEM_CONFIG, config[activePeriod]);
+          calculateStudentMetrics(student, currentSysConfig, config[activePeriod]);
           recalculados++;
         }
       });
@@ -333,7 +328,7 @@ function setupEventListeners() {
 
 // Escuchar cambios en localStorage desde otras pestañas/páginas
 window.addEventListener("storage", (e) => {
-  if (e.key === "atenas_students" || e.key === "atenas_config") {
+  if (e.key === "atenas_students" || e.key === "atenas_config" || e.key === "atenas_system_config") {
     loadPersistedData();
     updateDatabaseStatusUI();
   }
@@ -644,7 +639,8 @@ function handleParsedRows(rawRows) {
   const targetPeriod = document.getElementById("import-period-select").value;
 
   // 1. Agrupar y calcular promedios para los alumnos del archivo subido
-  const newStudents = groupAndCalculateStudentsForPeriod(rawRows, SYSTEM_CONFIG, targetPeriod);
+  const currentSysConfig = state.config || getSystemConfig();
+  const newStudents = groupAndCalculateStudentsForPeriod(rawRows, currentSysConfig, targetPeriod);
 
   // 2. Filtrar los estudiantes existentes para eliminar los del periodo destino (sobreescritura selectiva)
   const otherStudents = state.students.filter(s => s.periodo !== targetPeriod);
@@ -1064,7 +1060,7 @@ function loadDemoData() {
     
     ["Ciclo 1 - 2026", "Ciclo 2 - 2026", "Ciclo 1 - 2027"].forEach(pName => {
       const periodRows = demoRawRows.filter(r => r.periodo === pName);
-      const periodStudents = groupAndCalculateStudentsForPeriod(periodRows, SYSTEM_CONFIG, pName);
+      const periodStudents = groupAndCalculateStudentsForPeriod(periodRows, state.config || getSystemConfig(), pName);
       allDemoStudents = [...allDemoStudents, ...periodStudents];
     });
 
